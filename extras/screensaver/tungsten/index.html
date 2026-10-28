@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tungsten</title>
+<!-- Tungsten's screensaver for Steam Big Picture: the menu's ribbons on their
+     own, easing up to twice the pace. Built from tungsten.html by build_screensaver.py. -->
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #05080d; cursor: none; }
+  #bg { position: fixed; inset: 0; background: #05080d; }
+  #field, #field-soft { position: fixed; inset: 0; width: 100%; height: 100%; }
+  #field-soft { display: none; }
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<canvas id="field" aria-hidden="true"></canvas>
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const viewW = () => window.innerWidth;
+const viewH = () => window.innerHeight;
+const S0 = performance.now();                  // this page's 0 s: the ribbons start easing up from here
+
+/* ── The color engine (from tungsten.html): month palette, time of day ── */
+const PALETTES = [
+  { month: 'Jan', name: 'Silver/Ice',        hue: 210, sat: 12 },
+  { month: 'Feb', name: 'Warm Gold',         hue: 46,  sat: 78 },
+  { month: 'Mar', name: 'Spring Chartreuse', hue: 88,  sat: 62 },
+  { month: 'Apr', name: 'Soft Rose Pink',    hue: 338, sat: 65 },
+  { month: 'May', name: 'Deep Emerald',      hue: 145, sat: 68 },
+  { month: 'Jun', name: 'Soft Lavender',     hue: 268, sat: 55 },
+  { month: 'Jul', name: 'Sky Cyan',          hue: 196, sat: 78 },
+  { month: 'Aug', name: 'Deep Cobalt Blue',  hue: 222, sat: 82 },
+  { month: 'Sep', name: 'Royal Violet',      hue: 282, sat: 68 },
+  { month: 'Oct', name: 'Warm Amber/Orange', hue: 32,  sat: 82 },
+  { month: 'Nov', name: 'Russet Bronze',     hue: 18,  sat: 65 },
+  { month: 'Dec', name: 'Deep Crimson',      hue: 354, sat: 76 },
+];
+// Background lightness in % (center / edge of the radial gradient).
+const LIGHT = { noonCenter: 24, noonEdge: 6.5, nightCenter: 4, nightEdge: 1.2 };
+
+// 0 at night, 1 at noon: half-cosine rise 5:00 AM → 12:00 PM, fall 12:00 PM → 10:00 PM.
+function daylight(d) {
+  const h = d.getHours() + d.getMinutes() / 60;
+  if (h >= 5 && h < 12) return 0.5 - 0.5 * Math.cos((Math.PI * (h - 5)) / 7);
+  if (h >= 12 && h < 22) return 0.5 + 0.5 * Math.cos((Math.PI * (h - 12)) / 10);
+  return 0;
+}
+// Signed shortest turn between two hues, in degrees (-180 … 180).
+const hueTurn = (from, to) => ((((to - from) % 360) + 540) % 360) - 180;
+
+function autoColor(d) {
+  const m = d.getMonth(), a = PALETTES[m], b = PALETTES[(m + 1) % 12];
+  const days = new Date(d.getFullYear(), m + 1, 0).getDate();
+  const f = (d.getDate() - 1 + (d.getHours() + d.getMinutes() / 60) / 24) / days;
+  return { hue: a.hue + hueTurn(a.hue, b.hue) * f, sat: a.sat + (b.sat - a.sat) * f, day: daylight(d) };
+}
+
+
+function paint() {
+  const c = autoColor(new Date());
+  const lc = LIGHT.nightCenter + (LIGHT.noonCenter - LIGHT.nightCenter) * c.day;
+  const le = LIGHT.nightEdge + (LIGHT.noonEdge - LIGHT.nightEdge) * c.day;
+  const sat = c.sat * (0.55 + 0.45 * c.day);
+  const hue = ((c.hue % 360) + 360) % 360;
+  $('#bg').style.background = `radial-gradient(ellipse at 50% 50%, hsl(${hue.toFixed(2)} ${sat.toFixed(2)}% ${lc.toFixed(2)}%) 0%, hsl(${(hue + 2).toFixed(2)} ${Math.min(sat * 1.1, 100).toFixed(2)}% ${le.toFixed(2)}%) 100%)`;
+}
+
+/* ── The ribbons (from tungsten.html) ── */
+const field = $('#field');
+const ctx = field.getContext('2d');
+let W = 0, H = 0;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Silk ribbons, sampled every 8px from x = 0 to the right edge.
+// Centerline: the upward diagonal (58vh at the left edge, 42vh at the right)
+// plus a compound wave that rolls each ribbon into S-curve hills and valleys:
+//     wave(x, t) = sin(x·0.003 + t)·45 + cos(x·0.007 − t·1.3)·25      (px)
+// The upper and lower edges sit either side of the centerline on their own
+// sines (independent frequencies and phases), so they keep crossing over;
+// at each crossing the silk twists into a narrow, bright pinch.
+// The highest edge at every x is the ridge crest: a crisp 1.5px glowing line,
+// with the sheet fading from 0.12 alpha right under it to 0 at the lower edge.
+const STEP = 8;                        // px between samples
+const SPEED = 0.15;                    // wave time t advances 0.15 per second: a slow, unhurried drift
+const DIAG = [0.58, 0.42];             // centerline y (fraction of H) at x = 0 and x = W
+const THREADS = 10;                    // faint lines across each sheet
+const RIBBONS = [
+  { phase: [0, 0], lift: 0,
+    upper: { base: 26, amp: 46, k: 0.0046, w: 0.83, p: 0.0 },
+    lower: { base: 26, amp: 46, k: 0.0037, w: -1.07, p: 2.2 } },
+  { phase: [2.4, 1.1], lift: 24,
+    upper: { base: 24, amp: 44, k: 0.0041, w: 0.95, p: 4.1 },
+    lower: { base: 30, amp: 48, k: 0.0052, w: -0.78, p: 1.0 } },
+];
+let DPR = 1, N = 0, XS = new Float32Array(0), BUF = [];    // sample columns + per-ribbon buffers
+// The crest glow is a soft blur with no fine detail, so it renders into a
+// half-resolution layer that is scaled up onto the canvas: same look, a
+// fraction of the blur work every frame.
+const SOFT = 0.5;
+const soft = document.createElement('canvas');
+soft.id = 'field-soft';
+const sctx = soft.getContext('2d');
+
+// Flow time: the seconds every moving part of the field follows (the waves,
+// the bokeh's drift and twinkle). It's wall time since 2026, plus an offset
+// for any stretch the ribbons ran faster, so Tungsten and its screensaver
+// (another page, see build_screensaver.py) draw the very same frame at the
+// same moment and can hand the ribbons over without a seam.
+const FLOW_EPOCH = Date.UTC(2026, 0, 1);
+// (The system clock, read every time: a page's own clock can fall behind it
+// after the PC sleeps, and a page that just opened wouldn't agree.)
+const wallFlow = (now) => (Date.now() - FLOW_EPOCH + (now - performance.now())) / 1000;
+// The screensaver's ribbons ease from the menu's pace up to twice it over
+// RAMP seconds. saverFlow(s): the flow seconds gained s seconds in.
+const SAVER = { speed: 2, ramp: 3 };
+function saverSpeed(s) {
+  const x = Math.min(1, Math.max(0, s / SAVER.ramp));
+  return 1 + (SAVER.speed - 1) * x * x * (3 - 2 * x);
+}
+function saverFlow(s) {
+  if (s <= 0) return 0;
+  const R = SAVER.ramp, x = Math.min(1, s / R);
+  return (SAVER.speed - 1) * (R * (x * x * x - (x * x * x * x) / 2) + Math.max(0, s - R));
+}
+
+// The same 25 bokeh every time (a fixed seed), so both pages agree on them.
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rnd = seeded(0x7a1c3);
+const BOKEH = Array.from({ length: 25 }, () => ({
+  x: rnd(), y: rnd(),                          // fractions of the viewport at flow time 0
+  r: 1 + rnd() * 1.5,                          // radius 1px to 2.5px
+  a: 0.15 + rnd() * 0.2,                       // opacity 0.15 to 0.35
+  vx: (rnd() - 0.5) * 5,                       // px per second, drifting slowly
+  vy: (rnd() - 0.5) * 3 - 1,
+  tw: rnd() * Math.PI * 2,
+}));
+const wrapView = (v) => ((((v + 0.02) % 1.04) + 1.04) % 1.04) - 0.02;   // just past one edge comes back at the other
+
+function resizeField() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = viewW(); H = viewH();
+  field.width = Math.round(W * DPR); field.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  soft.width = Math.max(1, Math.round(W * SOFT)); soft.height = Math.max(1, Math.round(H * SOFT));
+  sctx.setTransform(SOFT, 0, 0, SOFT, 0, 0);
+  N = Math.ceil(W / STEP) + 1;
+  XS = new Float32Array(N);
+  for (let i = 0; i < N; i++) XS[i] = i * STEP;
+  BUF = RIBBONS.map(() => ({ u: new Float32Array(N), l: new Float32Array(N), top: new Float32Array(N), bot: new Float32Array(N) }));
+}
+
+window.addEventListener('resize', resizeField);
+resizeField();
+
+// Fill one ribbon's sample buffers at wave time tt. `amp` scales the waves
+// (the cold-start sweep runs them at 1.6).
+function sampleRibbon(rb, b, tt, amp = 1) {
+  const slope = ((DIAG[1] - DIAG[0]) * H) / W, y0 = DIAG[0] * H + rb.lift;
+  const U = rb.upper, L = rb.lower;
+  for (let i = 0; i < N; i++) {
+    const x = XS[i];
+    const c = y0 + slope * x
+      + (Math.sin(x * 0.003 + tt + rb.phase[0]) * 45
+      + Math.cos(x * 0.007 - tt * 1.3 + rb.phase[1]) * 25) * amp;
+    const u = c - (U.base + U.amp * amp * Math.sin(x * U.k + tt * U.w + U.p));
+    const l = c + (L.base + L.amp * amp * Math.sin(x * L.k + tt * L.w + L.p));
+    b.u[i] = u; b.l[i] = l;
+    b.top[i] = u < l ? u : l;               // highest edge = ridge crest
+    b.bot[i] = u < l ? l : u;
+  }
+}
+function polyline(c, ys) {
+  c.moveTo(XS[0], ys[0]);
+  for (let i = 1; i < N; i++) c.lineTo(XS[i], ys[i]);
+}
+// 1 · Sheet: 0.12 alpha just under the crest fading to 0 at the lower edge.
+//     Drawn as one slim quad per 8px column, each with its own top-to-bottom
+//     fade, so the fade hugs the curve wherever it rolls. Neighbouring quads
+//     share their edges and add up exactly ('lighter'), so no seams. Every
+//     column uses the same gradient (0 → 1 down the y axis), stretched onto
+//     the column by a transform: y' = (y − top) / height. Same pixels as a
+//     gradient per column, without making ~300 gradients every frame.
+let SHEET = null;
+function drawSheet(b) {
+  if (!SHEET) {
+    SHEET = ctx.createLinearGradient(0, 0, 0, 1);
+    SHEET.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+    SHEET.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  }
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = SHEET;
+  for (let i = 0; i < N - 1; i++) {
+    const t0 = b.top[i], t1 = b.top[i + 1], b0 = b.bot[i], b1 = b.bot[i + 1];
+    if (b0 - t0 < 0.5 && b1 - t1 < 0.5) continue;            // pinched shut here
+    const y = (t0 + t1) / 2, h = Math.max(0.5, (b0 + b1) / 2 - y);
+    ctx.setTransform(DPR, 0, 0, DPR * h, 0, DPR * y);
+    ctx.beginPath();
+    ctx.moveTo(XS[i], (t0 - y) / h); ctx.lineTo(XS[i + 1], (t1 - y) / h); ctx.lineTo(XS[i + 1], (b1 - y) / h); ctx.lineTo(XS[i], (b0 - y) / h);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+// Soft pass (half-resolution layer): the crest's glow.
+function drawGlow(b) {
+  // 2 · Crest glow: the 1.5px crest stroke with shadowBlur 12 and a white 0.6
+  //     shadow. The stroke itself is drawn far off to the left and only its
+  //     shadow is offset back into view; the crisp line is drawn at full
+  //     resolution in the sharp pass. (Shadow sizes and offsets are in canvas
+  //     pixels, so they're scaled to this layer.)
+  const OFF = 20000;
+  sctx.save();
+  sctx.translate(-OFF, 0);
+  sctx.lineWidth = 1.5;
+  sctx.lineJoin = 'round';
+  sctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  sctx.shadowBlur = 12 * SOFT;
+  sctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+  sctx.shadowOffsetX = OFF * SOFT;
+  sctx.beginPath(); polyline(sctx, b.top); sctx.stroke();
+  sctx.restore();
+}
+
+// Sharp pass (full resolution): threads, the crisp crest line, pinch glints.
+function drawSharp(b) {
+  // 3 · Threads between the two edges. They converge wherever the silk twists,
+  //     and since they add up ('lighter') the light piles into a pinch highlight.
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineWidth = 1;
+  for (let k = 1; k < THREADS; k++) {
+    const f = k / THREADS, rim = Math.pow(Math.abs(f - 0.5) * 2, 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${(0.016 + 0.022 * rim).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.moveTo(XS[0], b.u[0] + (b.l[0] - b.u[0]) * f);
+    for (let i = 1; i < N; i++) ctx.lineTo(XS[i], b.u[i] + (b.l[i] - b.u[i]) * f);
+    ctx.stroke();
+  }
+
+  // 4 · Ridge crest: crisp 1.5px line along the highest edge (its glow is in
+  //     the soft pass). It runs through every twist, so pinch points are lit too.
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.beginPath(); polyline(ctx, b.top); ctx.stroke();
+
+  // 5 · Specular glint where the sheet pinches (local minimum of its width),
+  //     a soft streak lying along the ribbon.
+  ctx.globalCompositeOperation = 'lighter';
+  const pinch = 0.016 * H;
+  for (let i = 1; i < N - 1; i++) {
+    const w = Math.abs(b.l[i] - b.u[i]);
+    if (w > 2.5 * pinch || w > Math.abs(b.l[i - 1] - b.u[i - 1]) || w >= Math.abs(b.l[i + 1] - b.u[i + 1])) continue;
+    const glow = 0.22 * Math.exp(-w / pinch), r = 0.022 * H;
+    ctx.save();
+    ctx.translate(XS[i], (b.u[i] + b.l[i]) / 2);
+    ctx.rotate(Math.atan2(b.top[i + 1] - b.top[i - 1], 2 * STEP));
+    ctx.scale(3.2, 1);
+    const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    rg.addColorStop(0, `rgba(255, 255, 255, ${glow.toFixed(3)})`);
+    rg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// One frame of the field at flow time F (seconds): the sheets and the crest
+// glow, the glow layer scaled up over just the band the crests occupy (plus
+// room for the blur), the threads, crests and glints, then the bokeh. `amp`
+// scales the waves; `alpha` < 1 with clear = false lays a second, fainter
+// frame over the first (a cross-fade between two flow times). Returns the
+// band the ribbons cover, for any pass drawn on top.
+function drawField(F, amp = 1, alpha = 1, clear = true) {
+  const tt = F * SPEED;
+  if (clear) ctx.clearRect(0, 0, W, H);
+  sctx.clearRect(0, 0, W, H);
+  ctx.globalAlpha = alpha;
+  let y0 = H, y1 = 0, yb = 0;
+  RIBBONS.forEach((rb, k) => {
+    const b = BUF[k];
+    sampleRibbon(rb, b, tt, amp);
+    for (let i = 0; i < N; i++) { if (b.top[i] < y0) y0 = b.top[i]; if (b.top[i] > y1) y1 = b.top[i]; if (b.bot[i] > yb) yb = b.bot[i]; }
+    drawSheet(b);
+    drawGlow(b);
+  });
+  y0 = Math.max(0, Math.floor(y0 - 40)); y1 = Math.min(H, Math.ceil(y1 + 40));
+  if (y1 > y0) {
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(soft, 0, y0 * SOFT, W * SOFT, (y1 - y0) * SOFT, 0, y0, W, y1 - y0);
+  }
+  RIBBONS.forEach((rb, k) => drawSharp(BUF[k]));
+  ctx.globalCompositeOperation = 'screen';
+  for (const p of BOKEH) {
+    const x = wrapView(p.x + (p.vx * F) / W), y = wrapView(p.y + (p.vy * F) / H);
+    const a = clamp(p.a + 0.06 * Math.sin(F * 0.5 + p.tw), 0.15, 0.35);   // a slow twinkle (about 13 s)
+    ctx.beginPath();
+    ctx.arc(x * W, y * H, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${a.toFixed(3)})`;
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  return { top: y0, bottom: Math.max(y1, yb) };
+}
+
+
+// The flow clock: the menu's (wall time), plus what easing up has gained.
+const flowNow = (now) => (reduceMotion ? 0 : wallFlow(now) + saverFlow((now - S0) / 1000));
+// Drawn about 30 times a second, the way the menu draws them (a crest moves
+// well under a pixel a frame even at twice the pace): the frames in between
+// cost nothing, over what can be hours of idle. As in the menu, the screen's
+// frame interval is measured, and the ribbons are drawn on every Nth frame
+// (the whole number of frames closest to 1/30 s), so any refresh rate keeps
+// an even beat.
+const SAVER_FRAME_MS = 1000 / 30;
+let lastDraw = -1e9, lastTick = 0, frameGap = 1000 / 60;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const d = now - lastTick;
+  lastTick = now;
+  if (d > 2 && d < 50) frameGap += (d - frameGap) * 0.05;
+  if (now - lastDraw < (Math.max(1, Math.round(SAVER_FRAME_MS / frameGap)) - 0.5) * frameGap) return;
+  lastDraw = now;
+  drawField(flowNow(now));
+}
+
+paint();
+setInterval(paint, 60000);                     // the color follows the clock
+drawField(flowNow(performance.now()));         // before the first paint: no blank frame
+requestAnimationFrame(frame);
+window.__tungstenSaver = { S0, flowNow, drawField, wallFlow, saverFlow };   // (for the tests)
+})();
+</script>
+</body>
+</html>
