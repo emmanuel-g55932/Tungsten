@@ -2,9 +2,9 @@
 
 A console-style home screen for Steam Big Picture, inspired by the PS3 menu. Your games and the rest of Steam sit on a cross-shaped menu made for a TV and a controller, over slow ribbons in a color that changes with the month. It runs inside Steam through [Millennium](https://steambrew.app/), so there's no extra launcher to set up: Big Picture is still there underneath, and holding one button brings it back.
 
-![Moving through Tungsten's menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/preview.gif)
+![Moving through Tungsten's menu with a controller](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/tour.webp)
 
-Version {VERSION}. This is a beta, made with AI assistance (see [How it was made](#how-it-was-made)).
+Version {VERSION}. This is a beta, made with AI assistance (see [How it was made](#how-it-was-made)). There's also [a one-minute tour with sound](https://github.com/emmanuel-g55932/Tungsten/raw/media/tungsten-tour-720p60.mp4) (MP4, 720p at 60 fps).
 
 ## What you get
 
@@ -18,15 +18,39 @@ Version {VERSION}. This is a beta, made with AI assistance (see [How it was made
 - **A startup movie, sounds and a screensaver** that picks up the menu's ribbons where they are. Steam's own menu sounds are held back while Tungsten is on screen, so they don't play over Tungsten's.
 - **A way out at any time.** Hold View (Create on a DualSense) or press Ctrl + Shift + X and you're back in Steam's own interface.
 
+## A closer look
+
+Every clip here is Tungsten itself, recorded at 60 frames a second with a sample library.
+
+**Game Details.** Y (Triangle) on a game, then Game Details: playtime, Steam Cloud, achievements, friends who own it, and your screenshots. The focus ring moves through it like the rest of the menu.
+
+![Opening Game Details for a game](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/details.webp)
+
+**The Library.** Every game you own, with the letters across the top. LB / RB (L1 / R1) jump a letter, LT / RT (L2 / R2) jump eight games, and Y (Triangle) picks what it shows.
+
+![Moving through the Library by letter](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/library.webp)
+
+**In a game.** The Steam or PS button brings the menu up over the game, with Resume Game and Quit Game first and the game's name in the corner.
+
+![Starting a game, then the in-game menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/ingame.webp)
+
+**Color and the screensaver.** X (Square) cycles through a color for each month. Left alone, the menu follows the month and the time of day, and the screensaver carries the ribbons on by themselves.
+
+![Changing the color, then the screensaver](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/color.webp)
+
+**Startup.** Big Picture opens on a short startup movie with its own sound. The B key plays it again.
+
+![The startup movie](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/media/boot.webp)
+
 ## Screenshots
 
 | | |
 |---|---|
-| ![The menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/home.jpg) | ![A game in focus](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/game.jpg) |
-| ![The Library, A to Z](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/library.jpg) | ![Game Details](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/inspector.jpg) |
-| ![The in-game menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/ingame.jpg) | ![SYSTEM, in September's color](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/system.jpg) |
+| ![The menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/home.jpg) | ![A game in focus, with its art](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/game.jpg) |
+| ![Game Details](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/inspector.jpg) | ![The Library, A to Z](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/library.jpg) |
+| ![The in-game menu](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/ingame.jpg) | ![February's color](https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/color.jpg) |
 
-The screenshots use a sample library. Game art belongs to its publishers and is loaded from Steam.
+The clips and screenshots use a sample library. Game art belongs to its publishers and is loaded from Steam.
 
 ## Before you install
 
@@ -186,7 +210,7 @@ Tungsten was made with AI assistance. The code, the tests and this README were w
 | `bigpicture.custom.*`, `friends.custom.*` | Empty on purpose; Millennium's default patches ask for them |
 | `extras/screensaver/` | The optional Big Picture screensaver |
 | `source/` | The single source file (`tungsten.html`, which also runs on its own in a browser as a preview) and the build scripts that turn it into the theme files |
-| `images/` | The pictures on this page |
+| `images/` | The pictures on this page and the store page (the clips live on the `media` branch) |
 
 ## License
 

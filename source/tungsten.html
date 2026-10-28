@@ -451,11 +451,11 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   opacity: 1; visibility: visible; transform: none; pointer-events: auto;
   transition: opacity 180ms ease, transform 240ms var(--ease), visibility 0s;
 }
-#tungsten-root .pill-btn {
+#tungsten-root .act-btn {
   display: inline-flex; align-items: center; gap: calc(7px * var(--ui));
   box-sizing: border-box; height: calc(30px * var(--ui));
   padding: 0 calc(15px * var(--ui)) 0 calc(12px * var(--ui));
-  border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px;
   background: rgba(255, 255, 255, 0.06);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -463,9 +463,9 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   text-shadow: none; white-space: nowrap; cursor: pointer;
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 220ms ease;
 }
-#tungsten-root .pill-btn svg { width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); flex: none; fill: currentColor; }
-#tungsten-root .pill-btn:hover,
-#tungsten-root .pill-btn:focus-visible {
+#tungsten-root .act-btn svg { width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); flex: none; fill: currentColor; }
+#tungsten-root .act-btn:hover,
+#tungsten-root .act-btn:focus-visible {
   outline: none;
   border-color: rgba(255, 255, 255, 0.95);
   background: rgba(255, 255, 255, 0.14);
@@ -490,25 +490,30 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 }
 @keyframes tg-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
-/* ───────────── Top bar: quick search + status pill ───────────── */
+/* ───────────── Top bar: search and the clock ─────────────
+   Type over the backdrop, the way the PS3 set its clock: no boxes, a soft
+   shadow so it reads on bright art, and a hairline between the two. Search
+   takes a shape (the frosted rectangle the buttons here use) only while
+   it's selected or open. */
 #tungsten-root #topbar {
   position: fixed; top: 3.5cqh; right: 4cqw; z-index: 4;          /* stays above the options drawer */
-  display: flex; align-items: center; gap: calc(10px * var(--ui));
+  height: calc(28px * var(--ui));
+  display: flex; align-items: center; gap: calc(18px * var(--ui));
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   transition: opacity 260ms ease, visibility 0s;
 }
 #tungsten-root #status {
   position: relative; z-index: 4;
-  box-sizing: border-box;
-  height: calc(28px * var(--ui)); padding: 0 calc(14px * var(--ui));
+  height: 100%;
   display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: calc(14px * var(--ui));
-  background: rgba(255, 255, 255, 0.04);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
   font-size: clamp(12px, calc(14px * var(--ui)), 30px); line-height: 1;
   color: rgba(255, 255, 255, 0.9);
   font-variant-numeric: tabular-nums;
+}
+#tungsten-root #status::before {                                 /* the hairline */
+  content: ''; flex: none;
+  width: 1px; height: calc(14px * var(--ui)); margin-right: calc(10px * var(--ui));
+  background: rgba(255, 255, 255, 0.32);
 }
 /* The spinner by the date: only while Steam is downloading something. */
 #tungsten-root #status .spin { display: none; width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); }
@@ -517,26 +522,29 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root #clock { white-space: pre; }
 @keyframes tg-spin { to { transform: rotate(360deg); } }
 
-/* Quick search (Ctrl + F or /): filters the GAMES column as you type. */
+/* Quick search (Ctrl + F or /): filters the GAMES column as you type. At
+   rest it's a glyph and a word; the box's padding hangs past them (the
+   negative margins), so when the box shows it frames them without moving.
+   Its width at rest is the word's (in em, as the type has a minimum size). */
 #tungsten-root #search {
   box-sizing: border-box;
-  height: calc(28px * var(--ui)); width: calc(118px * var(--ui));
-  padding: 0 calc(12px * var(--ui));
+  height: calc(28px * var(--ui)); width: calc(38px * var(--ui) + 2px + 3.4em);
+  margin: 0 calc(-8px * var(--ui)) 0 calc(-10px * var(--ui));
+  padding: 0 calc(8px * var(--ui)) 0 calc(10px * var(--ui));
+  font-size: clamp(12px, calc(14px * var(--ui)), 30px);
   display: inline-flex; align-items: center; gap: calc(7px * var(--ui));
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: calc(14px * var(--ui));
-  background: rgba(255, 255, 255, 0.04);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  border: 1px solid transparent; border-radius: 6px;
   color: rgba(255, 255, 255, 0.9);
   cursor: text;
   transition: width 300ms var(--ease), border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
-#tungsten-root #search:hover { border-color: rgba(255, 255, 255, 0.45); }
+#tungsten-root #search:hover { border-color: rgba(255, 255, 255, 0.28); }
 #tungsten-root #search.open {
   width: calc(210px * var(--ui));
   border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
 }
 /* Selected (Up past the top of GAMES, or R3): the focus ring, and the focus
@@ -547,11 +555,10 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(180, 215, 255, 0.2);
 }
 #tungsten-root.search-focus .item.focused .glow { opacity: 0.25; animation: none; }
-#tungsten-root #search svg { width: calc(13px * var(--ui)); height: calc(13px * var(--ui)); flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+#tungsten-root #search svg { width: calc(13px * var(--ui)); height: calc(13px * var(--ui)); flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
 #tungsten-root #search input {
   all: unset; display: block; flex: 1; min-width: 0;
   font-size: clamp(12px, calc(14px * var(--ui)), 30px); line-height: 1; color: #fff; caret-color: #fff;
-  text-shadow: none;
 }
 #tungsten-root #search input::placeholder { color: rgba(255, 255, 255, 0.72); }
 #tungsten-root #search.typing input { caret-color: transparent; }
@@ -597,43 +604,24 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   display: flex; gap: calc(14px * var(--ui)); justify-content: center; white-space: nowrap;
 }
 
-/* "Now Playing" badge, top left, while the in-game menu is open. */
+/* Top left while a game runs: the game's name, set like the clock it
+   mirrors (same size, same row, same shadow), after a small controller. */
 #tungsten-root #nowplaying {
   position: fixed; top: 3.5cqh; left: 4cqw; z-index: 4;
-  box-sizing: border-box; height: calc(28px * var(--ui));
-  padding: 0 calc(14px * var(--ui)) 0 calc(11px * var(--ui));
-  display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
-  border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  font-size: clamp(11px, calc(12px * var(--ui)), 26px); line-height: 1; white-space: nowrap;
-  color: rgba(255, 255, 255, 0.92);
+  height: calc(28px * var(--ui)); max-width: 40cqw;
+  display: flex; align-items: center; gap: calc(9px * var(--ui));
+  font-size: clamp(12px, calc(14px * var(--ui)), 30px); line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
   transition: opacity 280ms ease, transform 320ms var(--ease), visibility 0s linear 320ms;
 }
-#tungsten-root #nowplaying .k { letter-spacing: 0.14em; }
-#tungsten-root #nowplaying .sep { color: rgba(255, 255, 255, 0.45); }
-#tungsten-root #nowplaying .dot {
-  position: relative;
-  width: calc(8px * var(--ui)); height: calc(8px * var(--ui)); flex: none; border-radius: 50%;
-  background: #43e27f;
-  box-shadow: 0 0 6px rgba(67, 226, 127, 0.9);
+#tungsten-root #nowplaying svg {
+  width: calc(17px * var(--ui)); height: calc(13px * var(--ui)); flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
-/* The live pulse: a ring that grows and fades, a few times as the in-game
-   menu comes up. Only its transform and opacity change, so the compositor
-   runs it, and then nothing moves while a game runs in front. */
-#tungsten-root #nowplaying .dot::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: rgba(67, 226, 127, 0.6);
-  opacity: 0; transform: scale(1); pointer-events: none;
-}
-#tungsten-root.ingame-menu #nowplaying .dot::after { animation: tg-live-dot 1.8s ease-out 4; }
-@keyframes tg-live-dot {
-  0%   { opacity: 1; transform: scale(1); }
-  70%  { opacity: 0; transform: scale(2.75); }
-  100% { opacity: 0; transform: scale(2.75); }
-}
+#tungsten-root #nowplaying .t { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ───────────── Bottom control legend ─────────────
    Two rows in the same spot: keyboard keycaps, and controller symbols. They
@@ -842,8 +830,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root.overlay,
 #tungsten-root.overlay * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 #tungsten-root.overlay .item.focused .glow,
-#tungsten-root.overlay #status.busy .spin,
-#tungsten-root.overlay.ingame-menu #nowplaying .dot::after { animation: none; }
+#tungsten-root.overlay #status.busy .spin { animation: none; }
 #tungsten-root.ingame-menu #nowplaying { opacity: 1; visibility: visible; transform: none; transition: opacity 280ms ease, transform 320ms var(--ease), visibility 0s; }
 #tungsten-root.ingame-live { cursor: none; }
 
@@ -884,12 +871,12 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root.inspecting #dwell .logo { opacity: 0; }       /* the inspector replaces the clear logo */
 /* The focused title wraps before it can reach the inspector. */
 /* The inspector header already shows the title and Play, so the focused game's
-   own title, subtitle and pills fade out (200ms) and only its glowing
+   own title, subtitle and buttons fade out (200ms) and only its glowing
    thumbnail stays on the 22vw axis. They come back as soon as it closes. */
 #tungsten-root .item.focused .meta { transition: left var(--move) var(--ease), opacity 200ms ease, grid-template-rows var(--move) var(--ease); }
 #tungsten-root.inspecting .track.active .item.focused .meta { opacity: 0; }
 #tungsten-root.inspecting .track.active .item.focused .meta,
-#tungsten-root.inspecting .track.active .item.focused .meta * { pointer-events: none; }   /* the hidden pills can't be clicked */
+#tungsten-root.inspecting .track.active .item.focused .meta * { pointer-events: none; }   /* the hidden buttons can't be clicked */
 
 #tungsten-root .frost {
   background: rgba(255, 255, 255, 0.05);
@@ -922,11 +909,6 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root .stat { display: flex; flex-direction: column; justify-content: center; gap: calc(3px * var(--ui)); padding: calc(6px * var(--ui)) calc(13px * var(--ui)); min-height: calc(44px * var(--ui)); box-sizing: border-box; }
 #tungsten-root .stat .k { font-size: clamp(9px, calc(10.5px * var(--ui)), 22px); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); white-space: nowrap; }
 #tungsten-root .stat .v { font-size: clamp(12px, calc(14px * var(--ui)), 30px); white-space: nowrap; }
-#tungsten-root .stat .v.ok::before {
-  content: ''; display: inline-block; vertical-align: middle; margin: calc(-2px * var(--ui)) calc(6px * var(--ui)) 0 0;
-  width: calc(6px * var(--ui)); height: calc(6px * var(--ui)); border-radius: 50%;
-  background: #43e27f; box-shadow: 0 0 6px rgba(67, 226, 127, 0.8);
-}
 #tungsten-root .quick { display: flex; gap: calc(8px * var(--ui)); margin-left: auto; }
 #tungsten-root .icon-btn {
   width: calc(44px * var(--ui)); min-height: calc(44px * var(--ui)); padding: 0;
@@ -958,7 +940,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: calc(12px * var(--ui)); }
 #tungsten-root .sec-head .count { font-size: clamp(12px, calc(14px * var(--ui)), 30px); letter-spacing: 0.02em; text-transform: none; color: #fff; }
 #tungsten-root .sec-head .count .pct { color: rgba(255, 255, 255, 0.6); }
-#tungsten-root .ach-bar { position: relative; height: calc(6px * var(--ui)); border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
+#tungsten-root .ach-bar { position: relative; height: calc(3px * var(--ui)); border-radius: 1px; background: rgba(255, 255, 255, 0.12); }
 #tungsten-root .ach-bar > span {
   position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit;
   background: linear-gradient(90deg, #c9d1dc 0%, #ffffff 55%, #e9eff7 100%);   /* platinum */
@@ -976,12 +958,8 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 #tungsten-root .no-ach { font-size: clamp(12px, calc(14px * var(--ui)), 30px); color: rgba(255, 255, 255, 0.6); }
-#tungsten-root .friends { display: flex; flex-wrap: wrap; gap: calc(8px * var(--ui)); }
-#tungsten-root .friend {
-  display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
-  min-height: calc(34px * var(--ui)); padding: 0 calc(14px * var(--ui)) 0 calc(5px * var(--ui));
-  border-radius: 999px; box-sizing: border-box;
-}
+#tungsten-root .friends { display: flex; flex-wrap: wrap; gap: calc(10px * var(--ui)) calc(28px * var(--ui)); }
+#tungsten-root .friend { display: inline-flex; align-items: center; gap: calc(8px * var(--ui)); min-height: calc(28px * var(--ui)); }
 #tungsten-root .friend .ava {
   width: calc(24px * var(--ui)); height: calc(24px * var(--ui)); border-radius: 50%; flex: none;
   display: grid; place-items: center;
@@ -991,19 +969,18 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root .friend .who { font-size: clamp(12px, calc(13px * var(--ui)), 28px); }
 #tungsten-root .friend .st { font-size: clamp(11px, calc(12px * var(--ui)), 26px); color: rgba(255, 255, 255, 0.55); }
 #tungsten-root .friend .st.playing { color: #8ff0b4; }
-#tungsten-root .friend .st.playing::before { content: '●'; margin-right: 0.35em; font-size: 0.8em; }
 #tungsten-root .shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(10px * var(--ui)); }
 #tungsten-root .shot { padding: calc(3px * var(--ui)); aspect-ratio: 16 / 9; overflow: hidden; cursor: zoom-in; transition: border-color 160ms ease, box-shadow 220ms ease, background-color 160ms ease; }
 #tungsten-root .shot img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.92; }
 #tungsten-root .tags { display: flex; flex-wrap: wrap; gap: calc(8px * var(--ui)); margin-top: calc(12px * var(--ui)); }
 #tungsten-root .tag {
   display: inline-flex; align-items: center; gap: calc(6px * var(--ui));
-  min-height: calc(28px * var(--ui)); padding: 0 calc(12px * var(--ui)) 0 calc(9px * var(--ui));
-  border-radius: 999px; font-size: clamp(11px, calc(12px * var(--ui)), 26px);
+  min-height: calc(30px * var(--ui)); padding: 0 calc(12px * var(--ui)) 0 calc(10px * var(--ui));
+  font-size: clamp(11px, calc(12px * var(--ui)), 26px);
   transition: border-color 160ms ease, box-shadow 220ms ease, background-color 160ms ease;
 }
 #tungsten-root .tag svg { width: calc(11px * var(--ui)); height: calc(11px * var(--ui)); fill: none; stroke: #8ff0b4; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-#tungsten-root .tag.none { cursor: default; color: rgba(255, 255, 255, 0.55); }
+#tungsten-root .tag.none { min-height: 0; padding: 0; cursor: default; font-size: clamp(12px, calc(14px * var(--ui)), 30px); color: rgba(255, 255, 255, 0.6); }
 
 /* ───────────── Library (GAMES > Library) ─────────────
    A cross of its own for every game you own: the letters sit where the
@@ -1155,7 +1132,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #tungsten-root .dl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(6px * var(--ui)); }
 #tungsten-root .dl-title { font-size: clamp(13px, calc(15px * var(--ui)), 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #tungsten-root .dl-meta { font-size: clamp(11px, calc(12.5px * var(--ui)), 26px); color: rgba(255, 255, 255, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#tungsten-root .dl-bar { position: relative; height: calc(5px * var(--ui)); border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+#tungsten-root .dl-bar { position: relative; height: calc(3px * var(--ui)); border-radius: 1px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 /* The fill is the bar's full width, slid in from the left as it grows: the
    compositor moves it, nothing is laid out again every second. */
 #tungsten-root .dl-bar > span {
@@ -1278,7 +1255,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 
 /* ───────────── Cold boot (the startup movie, 6.2 s; B replays it) ─────────────
       0 ms  pitch black, and none of the interface: the categories, the
-            column, the top-right pills, the legend and the art are hidden.
+            column, the search and clock, the legend and the art are hidden.
             The black lifts off the background and the ribbons (1.4 s),
             which sweep in big, fast and glowing and settle by 2.5 s (see
             frame(): waves 1.6×, flow 1.8×, brightness 1.65, blur 3px).
@@ -1442,7 +1419,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   <div id="topbar">
     <label id="search" title="Search games (Ctrl + F or /)">
       <svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="5.9" cy="5.9" r="4.3" /><path d="M9.2 9.2 12.7 12.7" /></svg>
-      <input type="text" placeholder="Search..." spellcheck="false" autocomplete="off" aria-label="Search games">
+      <input type="text" placeholder="Search" spellcheck="false" autocomplete="off" aria-label="Search games">
     </label>
     <div id="osk" aria-hidden="true" aria-label="On-screen keyboard"></div>
     <div id="status" role="status" aria-label="Date and time">
@@ -1454,7 +1431,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
     </div>
   </div>
 
-  <div id="nowplaying" aria-hidden="true"><span class="dot"></span><span class="k">PLAYING</span><span class="sep">·</span><span class="t"></span></div>
+  <div id="nowplaying" aria-hidden="true"><svg viewBox="0 0 17 13"><path d="M5.1 1.7h6.8c1.9 0 3.3 1.3 3.6 3.2l.6 4.1c.2 1.6-1.2 2.6-2.4 1.9-.7-.4-1.3-1.2-1.8-1.9H5.1c-.5.7-1.1 1.5-1.8 1.9-1.2.7-2.6-.3-2.4-1.9l.6-4.1c.3-1.9 1.7-3.2 3.6-3.2Z"/><path d="M4.8 4.6v2.8M3.4 6h2.8"/><path d="M12 4.9h.01M13.4 6.7h.01" stroke-width="2"/></svg><span class="t"></span></div>
 
   <!-- The legend shows the controls for where you are (see layoutLegend):
        data-in names the places a hint shows (menu, ins = the Game Inspector,
@@ -1585,7 +1562,7 @@ function tlog(...parts) {
   try { console.info(msg); } catch (e) { /* no console */ }
   try { if (window.opener && window.opener !== window) window.opener.console.info(msg); } catch (e) { /* not reachable */ }
 }
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 tlog(`${VERSION} started: "${document.title}", ${window.innerWidth}×${window.innerHeight}, ${location.pathname}`);
 window.addEventListener('error', (e) => { if (/Tungsten|libraryroot/.test(String(e.filename || ''))) tlog(`error: ${e.message} (line ${e.lineno})`); });
 window.addEventListener('unhandledrejection', (e) => { const s = String((e.reason && e.reason.stack) || ''); if (/Tungsten|libraryroot/.test(s)) tlog(`error: ${e.reason && e.reason.message}`); });
@@ -2887,8 +2864,8 @@ function makeItem(c, it, eager = true) {
   const meta = document.createElement('div');
   meta.className = 'meta';
   meta.innerHTML = `<div class="title">${esc(it.title)}</div><div class="sub"><span>${esc(it.sub)}</span></div>` +
-    (it.appid && it.kind !== 'app' ? `<div class="actions"><button class="pill-btn" data-act="play" tabindex="-1">${PLAY_SVG}Play</button>` +
-                `<button class="pill-btn" data-act="details" tabindex="-1">${INFO_SVG}Details</button></div>` : '');   // (apps: a click opens them)
+    (it.appid && it.kind !== 'app' ? `<div class="actions"><button class="act-btn" data-act="play" tabindex="-1">${PLAY_SVG}Play</button>` +
+                `<button class="act-btn" data-act="details" tabindex="-1">${INFO_SVG}Details</button></div>` : '');   // (apps: a click opens them)
   li.append(thumb, meta);
   if (it.appid) {                                       // the focus bloom (see .glow)
     const glow = document.createElement('div');
@@ -4624,7 +4601,7 @@ function inspectorHTML(it) {
   if (d.friends) {
     const playing = d.friends.filter(([, st]) => st === 'playing').length;
     const list = d.friends.length
-      ? `<div class="friends">${d.friends.map(([name, st]) => `<span class="frost friend"><span class="ava" style="background: linear-gradient(135deg, hsl(${avatarHue(name)} 45% 52%), hsl(${(avatarHue(name) + 40) % 360} 50% 28%))">${esc(name[0])}</span><span class="who">${esc(name)}</span><span class="st ${st}">${FRIEND_STATUS[st]}</span></span>`).join('')}</div>`
+      ? `<div class="friends">${d.friends.map(([name, st]) => `<span class="friend"><span class="ava" style="background: linear-gradient(135deg, hsl(${avatarHue(name)} 45% 52%), hsl(${(avatarHue(name) + 40) % 360} 50% 28%))">${esc(name[0])}</span><span class="who">${esc(name)}</span><span class="st ${st}">${FRIEND_STATUS[st]}</span></span>`).join('')}</div>`
       : '<div class="no-ach">None of your friends have this game yet.</div>';
     friends = `<div class="ins-sec"><div class="sec-head"><span>Friends</span><span class="count">${playing ? `${playing} playing now` : `${d.friends.length} own it`}</span></div>${list}</div>`;
   }
@@ -4633,7 +4610,7 @@ function inspectorHTML(it) {
     : d.loading ? wait : d.shotsNote ? `<div class="no-ach">${esc(d.shotsNote)}</div>` : '';
   const dlc = d.loading ? ''
     : d.dlc.length ? d.dlc.map((x, k) => `<button class="frost tag" data-act="dlc" data-k="${k}">${CHECK_SVG}${esc(x.name)}</button>`).join('')
-    : `<span class="frost tag none">${esc(d.dlcNote)}</span>`;
+    : `<span class="tag none">${esc(d.dlcNote)}</span>`;
   const stat = (k, v, cls = '') => `<div class="frost stat"><span class="k">${k}</span><span class="v${cls}">${v ? esc(v) : '&nbsp;'}</span></div>`;
   return `<div class="ins-eyebrow">Game Details</div>
     <h2 class="ins-title">${esc(it.title)}</h2>
