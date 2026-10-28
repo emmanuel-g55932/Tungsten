@@ -1,0 +1,1327 @@
+@charset "UTF-8";
+/* Tungsten 1.5.0 · libraryroot.custom.css · Millennium theme for Steam
+
+   Every rule below is scoped to #tungsten-root (Tungsten itself) or
+   #tungsten-toggle (its button in Steam's title bar). Steam's own windows,
+   menus, settings and dialogs never match them, so Steam looks exactly as it
+   does without the theme whenever Tungsten is switched off or not mounted.
+   Animation and custom property names carry a tg- prefix for the same reason.
+
+   Generated from tungsten.html by build_theme.py. Edit the source and rebuild. */
+
+/* Registered so the background glides between palettes and times of day.
+   Only the root's own background uses them, so they aren't inherited: a
+   glide (once a minute in Auto) restyles the root alone, not every element
+   under it on every frame. */
+@property --tg-theme-hue { syntax: '<number>'; inherits: false; initial-value: 215; }
+@property --tg-theme-sat { syntax: '<number>'; inherits: false; initial-value: 40.5; }
+@property --tg-bg-lc { syntax: '<number>'; inherits: false; initial-value: 14.5; }
+@property --tg-bg-le { syntax: '<number>'; inherits: false; initial-value: 3.53; }
+@property --tg-bg-center { syntax: '*'; inherits: false; }
+@property --tg-bg-edge { syntax: '*'; inherits: false; }
+@property --tg-th { syntax: '<length>'; inherits: true; initial-value: 63px; }
+
+#tungsten-root {
+  /* Background color, driven from JS by the calendar + circadian color engine:
+     hue and saturation from the month palette, lightness from the time of day
+     (center / edge of the radial gradient, in %).                           */
+  --tg-theme-hue: 215; --tg-theme-sat: 40.5; --tg-bg-lc: 14.5; --tg-bg-le: 3.53;
+
+  /* Motion shared by both tracks */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --move: 280ms;
+
+  /* How `top` is read for icons and thumbnails:
+      0   = `top` is the element's top edge, as written in the spec (default)
+     -0.5 = the element is centered on its `top` coordinate                  */
+  --anchor: 0;
+
+  /* Layout scale. Exactly 1 on any screen at least 900px tall and 1400px wide,
+     so every px value above is used as written. Smaller windows shrink the px
+     values proportionally (set from JS) so rows can never collide.          */
+  --ui: 1;
+
+  /* Viewport background: radial gradient, center → edges. */
+  --tg-bg-center: hsl(var(--tg-theme-hue) calc(var(--tg-theme-sat) * 1%) calc(var(--tg-bg-lc) * 1%));
+  --tg-bg-edge:   hsl(calc(var(--tg-theme-hue) + 2) calc(min(var(--tg-theme-sat) * 1.1, 100) * 1%) calc(var(--tg-bg-le) * 1%));
+
+  --font: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  --icon-shadow: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.8));
+
+  transition: --tg-theme-hue 1400ms var(--ease), --tg-theme-sat 1400ms var(--ease),
+              --tg-bg-lc 1400ms var(--ease), --tg-bg-le 1400ms var(--ease);
+}
+#tungsten-root.instant { transition: none; }
+
+/* ───────────── The root ─────────────
+   All of Tungsten lives inside #tungsten-root, and every rule here is scoped
+   to it, so nothing leaks into Steam's own windows, popups or dialogs. In the
+   standalone page the root fills the window. Inside Steam (Millennium) the
+   script creates it over the library, just under Steam's title bar, under
+   Steam's own dialogs (z-index 1500 and up).
+   container-type + contain make the root the box that every cqw / cqh length
+   and every fixed layer is measured against, instead of the window.          */
+#tungsten-root {
+  position: fixed; inset: 0; z-index: 1400;
+  overflow: hidden;
+  container-type: size;
+  contain: strict;
+}
+#tungsten-root.off,
+#tungsten-root.away { display: none; }       /* switched off, or Big Picture showing one of Steam's own pages */
+#tungsten-root.under { pointer-events: none; }   /* one of Steam's menus is open over it */
+#tungsten-root:not(.steam) #legend .steam-hint { display: none; }   /* "Hold: Steam" only makes sense inside Steam */
+/* In the in-game overlay the real game is behind Tungsten: no art stands in
+   for it, and the dark glass of the in-game menu sits right on the game. */
+#tungsten-root.overlay { background: transparent; }
+#tungsten-root.overlay #game .feed { display: none; }
+
+/* The on/off switch in Steam's title bar, next to the window buttons
+   (Ctrl + Shift + X or F12 do the same). Outside the root, so it stays put
+   while Tungsten is off. */
+#tungsten-toggle {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 30px; height: 24px; margin: 0 6px; border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5); cursor: pointer;
+  -webkit-app-region: no-drag; pointer-events: auto;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+#tungsten-toggle:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+#tungsten-toggle.on { color: #fff; }
+#tungsten-toggle svg {
+  width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round;
+  transition: filter 160ms ease;
+}
+#tungsten-toggle.on svg { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8)); }
+#tungsten-toggle.floating {
+  position: fixed; top: 6px; right: 150px; z-index: 2147483000;
+  background: rgba(14, 18, 24, 0.7); border: 1px solid rgba(255, 255, 255, 0.18);
+}
+/* Steam styles a few bare elements (button, h2, kbd, ::selection). Inside the
+   root they render the same as in a browser. */
+#tungsten-root button,
+#tungsten-root input { font: inherit; color: inherit; }
+#tungsten-root h2 { font: inherit; }
+#tungsten-root ::selection { background: rgba(255, 255, 255, 0.28); color: #fff; text-shadow: none; }
+
+
+#tungsten-root {
+  background: radial-gradient(ellipse at 50% 50%, var(--tg-bg-center) 0%, var(--tg-bg-edge) 100%);
+  color: #FFFFFF;
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: var(--text-shadow);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#tungsten-root.cursor-idle,
+#tungsten-root.cursor-idle * { cursor: none !important; }
+#tungsten-root img { -webkit-user-drag: none; }
+#tungsten-root .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Shared icon styling */
+#tungsten-root .ico { display: block; overflow: visible; color: #fff; }
+
+/* ───────────── Stacking: waves 0 · dwell art 1 · UI 2 ───────────── */
+
+/* Layer 0 · Harmonic phase-field. It also fades out while game art is up,
+   so nothing from the waves can ever sit on top of a hero image.            */
+#tungsten-root #field {
+  position: fixed; inset: 0; width: 100cqw; height: 100cqh; z-index: 0; pointer-events: none;
+  opacity: 1;
+  transition: opacity 300ms ease;               /* back in as soon as the art leaves */
+}
+#tungsten-root #field.veiled { opacity: 0; transition: opacity 650ms ease; }   /* out in step with the art fading in */
+
+/* Layer 1 · Dwell hero + clear logo */
+#tungsten-root #dwell {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;           /* fade-out the moment the selection moves */
+}
+#tungsten-root #dwell.on { opacity: 1; transition: opacity 650ms ease; }
+#tungsten-root #dwell .hero,
+#tungsten-root #dwell .vignette { position: absolute; inset: 0; }
+#tungsten-root #dwell .hero > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#tungsten-root #dwell .vignette {
+  background: linear-gradient(90deg, rgba(5, 8, 13, 0.82) 0%, rgba(5, 8, 13, 0.35) 55%, rgba(5, 8, 13, 0.65) 100%);
+}
+/* Clear logo framed in the lower-right corner, anchored by its bottom-right
+   edge so tall and wide logos both grow up and to the left, away from faces. */
+#tungsten-root #dwell .logo {
+  position: absolute; left: auto; top: auto; right: 7cqw; bottom: 16cqh;
+  max-width: 300px;
+  display: flex; justify-content: flex-end; align-items: flex-end;
+  transform: scale(var(--ui)); transform-origin: 100% 100%;
+  filter: var(--icon-shadow);
+}
+#tungsten-root #dwell .logo canvas { display: block; max-width: 300px; }
+#tungsten-root #dwell .wordmark {
+  width: max-content; max-width: 300px;
+  text-align: right; text-transform: uppercase;
+  font-weight: 300; letter-spacing: 0.14em; line-height: 1.12;
+}
+
+/* ───────────── Horizontal category track ───────────── */
+#tungsten-root #cats { position: fixed; inset: 0; z-index: 2; pointer-events: none; margin: 0; padding: 0; }   /* after #tracks in the DOM, so rows scroll behind the icons */
+#tungsten-root .cat {
+  position: absolute;
+  top: 25cqh;
+  left: calc(22cqw + var(--rel) * 115px * var(--ui));
+  width: calc(48px * var(--ui)); height: calc(48px * var(--ui));
+  transform: translate(-50%, calc(var(--anchor) * 100%));
+  opacity: 0.45;
+  transition: left var(--move) var(--ease), opacity var(--move) var(--ease);
+  pointer-events: auto; cursor: pointer;
+  list-style: none;
+}
+/* Frosted-glass category icons: filled shapes with a vertical frost gradient,
+   a 1px specular rim along their top edges, and a hard 2px "extrusion" edge
+   plus a soft drop shadow underneath. The active icon's bloom is a blurred
+   white copy behind it, so it doesn't pick up the dark shadow.               */
+#tungsten-root .cat .ico,
+#tungsten-root .cat .glow {
+  position: absolute; left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  transform: scale(0.78);
+  transition: transform var(--move) var(--ease), opacity var(--move) var(--ease);
+}
+#tungsten-root .cat .ico { filter: drop-shadow(0 2px 0 rgba(120, 140, 170, 0.5)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85)); }
+#tungsten-root .cat .glow { opacity: 0; filter: blur(7px); }           /* = drop-shadow(0 0 14px rgba(255,255,255,0.65)) */
+#tungsten-root .cat .glow .glass { fill: #fff; stroke: none; }
+#tungsten-root .cat.active { opacity: 1; }
+#tungsten-root .cat:not(.active):hover { opacity: 0.85; }
+/* Category icons that would sit under the open Game Inspector step aside. */
+#tungsten-root .cat.tucked { opacity: 0; pointer-events: none; }
+#tungsten-root .cat.active .ico,
+#tungsten-root .cat.active .glow { transform: scale(1.15); }
+#tungsten-root .cat.active .glow { opacity: 0.65; }
+#tungsten-root .glass { fill: url(#tg-frost); stroke: url(#tg-frost-rim); stroke-width: 0.5; stroke-linejoin: round; }
+#tungsten-root .glass.behind { fill-opacity: 0.7; }
+#tungsten-root .cat .label {
+  position: absolute; left: 50%;
+  top: calc((24px + 24px * 1.15 + 10px) * var(--ui));   /* 10px below the scaled icon's bottom edge */
+  transform: translateX(-50%);
+  font-size: calc(12px * var(--ui)); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--move) var(--ease);
+}
+#tungsten-root .cat.active .label { opacity: 1; }
+
+/* ───────────── Vertical library track (one column per category) ───────────── */
+#tungsten-root #tracks {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  /* The longest queue reaches the legend; let it dissolve just above it. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5cqh - 80px), transparent calc(100% - 3.5cqh - 24px));
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5cqh - 80px), transparent calc(100% - 3.5cqh - 24px));
+}
+#tungsten-root .track {
+  position: absolute; inset: 0;
+  transform: translateX(calc(var(--crel) * 115px * var(--ui)));
+  opacity: 0;
+  transition: transform var(--move) var(--ease), opacity var(--move) var(--ease);
+  margin: 0; padding: 0;
+}
+#tungsten-root .track.active { opacity: 1; }
+
+#tungsten-root .item {
+  position: absolute; left: 0; top: 0; width: 100%; height: 0;
+  list-style: none;
+  --tg-th: 63px;
+  opacity: 1; visibility: visible;
+  transition: top var(--move) var(--ease), --tg-th var(--move) var(--ease), opacity 200ms ease, visibility 0s;
+}
+#tungsten-root .item.focused { top: 41cqh;                                                 --tg-th: calc(124px * var(--ui)); }
+#tungsten-root .item.below { top: calc(56cqh + (var(--delta) - 1) * 88px * var(--ui));   --tg-th: calc(79px * var(--ui)); }
+#tungsten-root .item.above { top: calc(14cqh + (var(--delta) + 1) * 74px * var(--ui));   --tg-th: calc(65px * var(--ui)); }
+
+#tungsten-root .thumb {
+  position: absolute; left: 22cqw; top: 0;
+  box-sizing: border-box;
+  width: calc(140px * var(--ui)); height: calc(79px * var(--ui));
+  border-radius: 4px;
+  border: 0 solid rgba(255, 255, 255, 0);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 0 0 0 rgba(180, 215, 255, 0), 0 0 0 rgba(0, 0, 0, 0);
+  opacity: 0.75;
+  overflow: hidden;
+  transform: translate(-50%, calc(var(--anchor) * 100%)) scale(1);
+  transform-origin: 50% 50%;
+  transition:
+    width var(--move) var(--ease), height var(--move) var(--ease),
+    border-radius var(--move) var(--ease), border-width var(--move) var(--ease),
+    border-color var(--move) var(--ease), box-shadow var(--move) var(--ease),
+    opacity var(--move) var(--ease), transform var(--move) var(--ease);
+}
+#tungsten-root .thumb > img,
+#tungsten-root .thumb > svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+#tungsten-root .item.focused .thumb {
+  width: calc(220px * var(--ui)); height: calc(124px * var(--ui));
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 0 0 0 rgba(180, 215, 255, 0), 0 10px 28px rgba(0, 0, 0, 0.85);
+  opacity: 1;
+}
+#tungsten-root .item.below .thumb { width: calc(140px * var(--ui)); height: calc(79px * var(--ui)); border-radius: 4px; opacity: 0.75; }
+#tungsten-root .item.above .thumb {
+  width: calc(116px * var(--ui)); height: calc(65px * var(--ui)); border-radius: 4px; opacity: 0.32;
+  transform: translate(-50%, calc(var(--anchor) * 100%)) scale(0.85);
+}
+/* The focus card's bloom: a layer of its own over the card, the size of a
+   focused card. It grows in with the card (scale) and then breathes, and
+   only its opacity and transform ever change, so the compositor animates
+   it without repainting: a focused card at rest costs nothing per frame. */
+#tungsten-root .item .glow {
+  position: absolute; left: 22cqw; top: 0;
+  width: calc(220px * var(--ui)); height: calc(124px * var(--ui));
+  border-radius: 5px;
+  box-shadow: 0 0 18px 3px rgba(255, 255, 255, 0.55), 0 0 38px 8px rgba(180, 215, 255, 0.25);
+  transform: translate(-50%, calc(var(--anchor) * 100%)) scale(0.636);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--move) var(--ease), transform var(--move) var(--ease);
+}
+#tungsten-root .item.focused .glow {
+  transform: translate(-50%, calc(var(--anchor) * 100%)) scale(1);
+  opacity: 1;
+  animation: tg-glow-breathe 3.6s ease-in-out var(--move) infinite;   /* starts once the move has settled */
+}
+@keyframes tg-glow-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.58; } }
+
+/* Non-game items (APPS, MEDIA, FRIENDS, STORE, SYSTEM, and Resume / Quit in
+   the in-game menu): no cards at all. Each is a frameless frosted-glass glyph
+   centered on the 22vw axis, 72×72 when focused and 46×46 otherwise, in the
+   same frost as the category icons. Only games use the 220×124 / 140×79
+   cards and their glow.                                                    */
+#tungsten-root .item.icon { --tg-th: calc(46px * var(--ui)); }
+#tungsten-root .item.icon.focused { --tg-th: calc(72px * var(--ui)); }
+#tungsten-root .item.icon .thumb {
+  width: calc(46px * var(--ui)); height: calc(46px * var(--ui));
+  background: none; border: none; border-radius: 0; box-shadow: none;
+  overflow: visible;
+  animation: none;
+  transform: translate(-50%, calc(var(--anchor) * 100%));
+}
+#tungsten-root .item.icon.focused .thumb { width: calc(72px * var(--ui)); height: calc(72px * var(--ui)); }
+#tungsten-root .item.icon.launching .thumb { animation: tg-press 420ms var(--ease); }
+#tungsten-root .thumb > .glyph {
+  overflow: visible;
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.6)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85));
+}
+/* Friends in FRIENDS: Steam's avatar in a rounded square, the glyph's size,
+   with a status dot (Steam's colors: green in a game, blue online, dimmer
+   blue away, grey offline). Offline friends sit back a little. */
+#tungsten-root .item.friend .thumb > .ava-box {
+  position: relative; width: 100%; height: 100%; border-radius: 22%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+#tungsten-root .item.friend .thumb > .ava-box::before {             /* initial, under the picture */
+  content: attr(data-letter); position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: calc(20px * var(--ui)); font-weight: 500; color: rgba(255, 255, 255, 0.92);
+}
+#tungsten-root .item.friend.focused .thumb > .ava-box::before { font-size: calc(30px * var(--ui)); }
+#tungsten-root .item.friend .ava { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+#tungsten-root .item.friend .ava.broken { visibility: hidden; }
+#tungsten-root .item.friend .dot {
+  position: absolute; right: -6%; bottom: -6%; width: 26%; height: 26%; border-radius: 50%;
+  background: #7d8590; box-shadow: 0 0 0 calc(2px * var(--ui)) rgba(8, 12, 20, 0.92);
+}
+#tungsten-root .item.friend.ingame .dot { background: #90ba3c; box-shadow: 0 0 0 calc(2px * var(--ui)) rgba(8, 12, 20, 0.92), 0 0 8px rgba(144, 186, 60, 0.7); }
+#tungsten-root .item.friend.online .dot { background: #57cbde; box-shadow: 0 0 0 calc(2px * var(--ui)) rgba(8, 12, 20, 0.92), 0 0 8px rgba(87, 203, 222, 0.6); }
+#tungsten-root .item.friend.away .dot { background: #3d7f8c; }
+#tungsten-root .item.friend.ingame .sub > span { color: #b6d77a; }
+#tungsten-root .item.friend.online .sub > span { color: #8fdcea; }
+#tungsten-root .item.friend.offline .thumb { filter: saturate(0.5) brightness(0.8); }
+
+/* Games the search filters out fade away; the rest close ranks. */
+#tungsten-root .item.gone {
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: top var(--move) var(--ease), --tg-th var(--move) var(--ease), opacity 160ms ease, visibility 0s linear 160ms;
+}
+/* Only the rows near the focus are laid out at all (a library can hold
+   hundreds of games); the rest wait off screen. A row coming back fades in
+   where it lands.                                                          */
+#tungsten-root .item.far { display: none; }
+#tungsten-root .item { animation: tg-row-in var(--move) var(--ease); }
+@keyframes tg-row-in { from { opacity: 0; } }
+/* Holding a direction: every move is short enough to finish before the next
+   step (with a frame or two to spare), so the column keeps up and the focus
+   slot always shows the focus. (The quicker pace is set on the two tracks,
+   the only things that use it, so a hold starting or speeding up restyles
+   them and not everything else on screen.)                                 */
+#tungsten-root.fast #cats, #tungsten-root.fast #tracks, #tungsten-root.fast #library { --move: 65ms; }
+#tungsten-root.fast.faster #cats, #tungsten-root.fast.faster #tracks, #tungsten-root.fast.faster #library { --move: 25ms; }
+#tungsten-root.fast .item.focused .glow { animation: none; }
+
+#tungsten-root .meta {
+  position: absolute; left: 28cqw;
+  top: calc((var(--anchor) + 0.5) * var(--tg-th));   /* = thumbnail's vertical center */
+  transform: translateY(-50%);
+  display: grid; grid-template-rows: auto 0fr;
+  white-space: nowrap;
+  transition: left var(--move) var(--ease), opacity var(--move) var(--ease),
+              grid-template-rows var(--move) var(--ease);
+}
+#tungsten-root .item.focused .meta { left: 31cqw; grid-template-rows: auto 1fr; }
+#tungsten-root .item.above .meta { opacity: 0; }
+#tungsten-root .title {
+  font-size: calc(18px * var(--ui)); font-weight: 400; line-height: 1.22;
+  color: rgba(255, 255, 255, 0.65);
+  transition: font-size var(--move) var(--ease), color var(--move) var(--ease);
+}
+#tungsten-root .item.focused .title { font-size: calc(26px * var(--ui)); color: #FFFFFF; }
+#tungsten-root .sub {
+  min-height: 0;
+  font-size: calc(13px * var(--ui)); line-height: 1.4;
+  color: rgba(255, 255, 255, 0.68);
+  opacity: 0;
+  transition: opacity var(--move) var(--ease);
+}
+#tungsten-root .sub > span { display: block; padding-top: 5px; }
+#tungsten-root .item.focused .sub { opacity: 1; }
+
+/* Mouse. Every item in the visible column can be clicked (an unfocused one
+   glides into the focus slot). Hovering an unfocused item lifts it to 0.85. */
+#tungsten-root .track.active .item .thumb,
+#tungsten-root .track.active .item:not(.above) .meta { pointer-events: auto; cursor: pointer; }
+#tungsten-root .track.active .item:not(.focused).hover .thumb { opacity: 0.85; }
+#tungsten-root .track.active .item.below.hover .title { color: rgba(255, 255, 255, 0.85); }
+
+/* Hovering the focused game reveals a frameless frosted action row under its
+   subtitle. It lingers for a moment after the pointer leaves, so the pointer
+   can cross from the card to the buttons.                                   */
+#tungsten-root .actions {
+  position: absolute; left: 0; top: calc(100% + 14px * var(--ui));
+  display: flex; gap: calc(10px * var(--ui));
+  opacity: 0; visibility: hidden; transform: translateY(-4px); pointer-events: none;
+  transition: opacity 180ms ease 260ms, transform 240ms var(--ease) 260ms, visibility 0s linear 440ms;
+}
+#tungsten-root .track.active .item.focused.hover .actions {
+  opacity: 1; visibility: visible; transform: none; pointer-events: auto;
+  transition: opacity 180ms ease, transform 240ms var(--ease), visibility 0s;
+}
+#tungsten-root .pill-btn {
+  display: inline-flex; align-items: center; gap: calc(7px * var(--ui));
+  box-sizing: border-box; height: calc(30px * var(--ui));
+  padding: 0 calc(15px * var(--ui)) 0 calc(12px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff; font: inherit; font-size: clamp(11px, calc(13px * var(--ui)), 28px); letter-spacing: 0.04em;
+  text-shadow: none; white-space: nowrap; cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 220ms ease;
+}
+#tungsten-root .pill-btn svg { width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); flex: none; fill: currentColor; }
+#tungsten-root .pill-btn:hover,
+#tungsten-root .pill-btn:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 0 34px rgba(180, 215, 255, 0.22);   /* white hover bloom */
+}
+
+/* "No games match" in place of the focus slot when a search finds nothing. */
+#tungsten-root .nomatch {
+  position: absolute; left: 31cqw; top: calc(41cqh + 48px * var(--ui));
+  font-size: clamp(13px, calc(18px * var(--ui)), 36px); color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap; list-style: none;
+  opacity: 0; transition: opacity 200ms ease;
+}
+#tungsten-root .nomatch.show { opacity: 1; }
+
+/* Select feedback for the non-game destinations ("Opening…"). Games run the
+   full launch sequence instead (see "Launch sequence" below).              */
+#tungsten-root .item.launching .sub > span { animation: tg-breathe 1.3s ease-in-out infinite; }
+@keyframes tg-press {
+  0%, 100% { transform: translate(-50%, calc(var(--anchor) * 100%)) scale(1); }
+  35%      { transform: translate(-50%, calc(var(--anchor) * 100%)) scale(0.95); }
+}
+@keyframes tg-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* ───────────── Top bar: quick search + status pill ───────────── */
+#tungsten-root #topbar {
+  position: fixed; top: 3.5cqh; right: 4cqw; z-index: 4;          /* stays above the options drawer */
+  display: flex; align-items: center; gap: calc(10px * var(--ui));
+  transition: opacity 260ms ease, visibility 0s;
+}
+#tungsten-root #status {
+  position: relative; z-index: 4;
+  box-sizing: border-box;
+  height: calc(28px * var(--ui)); padding: 0 calc(14px * var(--ui));
+  display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: calc(14px * var(--ui));
+  background: rgba(255, 255, 255, 0.04);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-size: clamp(12px, calc(14px * var(--ui)), 30px); line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+/* The spinner by the date: only while Steam is downloading something. */
+#tungsten-root #status .spin { display: none; width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); }
+#tungsten-root #status.busy .spin { display: block; animation: tg-spin 2.4s linear infinite; }
+#tungsten-root #status.busy { cursor: pointer; }
+#tungsten-root #clock { white-space: pre; }
+@keyframes tg-spin { to { transform: rotate(360deg); } }
+
+/* Quick search (Ctrl + F or /): filters the GAMES column as you type. */
+#tungsten-root #search {
+  box-sizing: border-box;
+  height: calc(28px * var(--ui)); width: calc(118px * var(--ui));
+  padding: 0 calc(12px * var(--ui));
+  display: inline-flex; align-items: center; gap: calc(7px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: calc(14px * var(--ui));
+  background: rgba(255, 255, 255, 0.04);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: text;
+  transition: width 300ms var(--ease), border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+}
+#tungsten-root #search:hover { border-color: rgba(255, 255, 255, 0.45); }
+#tungsten-root #search.open {
+  width: calc(210px * var(--ui));
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
+}
+/* Selected (Up past the top of GAMES, or R3): the focus ring, and the focus
+   card below lets go of its glow. Pressing it opens it. */
+#tungsten-root #search.selected {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(180, 215, 255, 0.2);
+}
+#tungsten-root.search-focus .item.focused .glow { opacity: 0.25; animation: none; }
+#tungsten-root #search svg { width: calc(13px * var(--ui)); height: calc(13px * var(--ui)); flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+#tungsten-root #search input {
+  all: unset; display: block; flex: 1; min-width: 0;
+  font-size: clamp(12px, calc(14px * var(--ui)), 30px); line-height: 1; color: #fff; caret-color: #fff;
+  text-shadow: none;
+}
+#tungsten-root #search input::placeholder { color: rgba(255, 255, 255, 0.72); }
+#tungsten-root #search.typing input { caret-color: transparent; }
+#tungsten-root #search.typing::after {                              /* where the next letter goes */
+  content: ''; width: 1px; height: calc(14px * var(--ui)); margin-left: -4px; background: #fff;
+  animation: tg-caret 1s steps(1) infinite;
+}
+@keyframes tg-caret { 50% { opacity: 0; } }
+
+/* On-screen keyboard for searching with a controller, under the search box. */
+#tungsten-root #osk {
+  position: absolute; top: calc(100% + 10px * var(--ui)); right: 0;
+  display: grid; gap: calc(6px * var(--ui));
+  padding: calc(12px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.22); border-radius: calc(12px * var(--ui));
+  background: rgba(8, 10, 16, 0.55);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  opacity: 0; transform: translateY(-6px); visibility: hidden; pointer-events: none;
+  transition: opacity 200ms ease, transform 260ms var(--ease), visibility 0s linear 260ms;
+}
+#tungsten-root #osk.open {
+  opacity: 1; transform: none; visibility: visible; pointer-events: auto;
+  transition: opacity 200ms ease, transform 260ms var(--ease), visibility 0s;
+}
+#tungsten-root #osk .row { display: grid; grid-template-columns: repeat(10, calc(32px * var(--ui))); gap: calc(6px * var(--ui)); }
+#tungsten-root #osk .key {
+  -webkit-backdrop-filter: none; backdrop-filter: none;           /* the panel is frosted already: one blur, not one per key */
+  background-color: rgba(255, 255, 255, 0.06);
+  height: calc(32px * var(--ui)); padding: 0; cursor: pointer;
+  font: inherit; font-size: clamp(12px, calc(14px * var(--ui)), 30px); color: #fff; text-transform: uppercase;
+  transition: border-color 140ms ease, box-shadow 180ms ease, background-color 140ms ease;
+}
+#tungsten-root #osk .key.wide { text-transform: none; }
+#tungsten-root #osk .key:hover,
+#tungsten-root #osk .key.pad-focus {
+  background-color: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.4), 0 0 28px rgba(180, 215, 255, 0.2);
+}
+#tungsten-root #osk .osk-hints {
+  margin-top: calc(4px * var(--ui));
+  font-size: clamp(10px, calc(12px * var(--ui)), 26px); letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.7);
+  display: flex; gap: calc(14px * var(--ui)); justify-content: center; white-space: nowrap;
+}
+
+/* "Now Playing" badge, top left, while the in-game menu is open. */
+#tungsten-root #nowplaying {
+  position: fixed; top: 3.5cqh; left: 4cqw; z-index: 4;
+  box-sizing: border-box; height: calc(28px * var(--ui));
+  padding: 0 calc(14px * var(--ui)) 0 calc(11px * var(--ui));
+  display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-size: clamp(11px, calc(12px * var(--ui)), 26px); line-height: 1; white-space: nowrap;
+  color: rgba(255, 255, 255, 0.92);
+  opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+  transition: opacity 280ms ease, transform 320ms var(--ease), visibility 0s linear 320ms;
+}
+#tungsten-root #nowplaying .k { letter-spacing: 0.14em; }
+#tungsten-root #nowplaying .sep { color: rgba(255, 255, 255, 0.45); }
+#tungsten-root #nowplaying .dot {
+  position: relative;
+  width: calc(8px * var(--ui)); height: calc(8px * var(--ui)); flex: none; border-radius: 50%;
+  background: #43e27f;
+  box-shadow: 0 0 6px rgba(67, 226, 127, 0.9);
+}
+/* The live pulse: a ring that grows and fades, a few times as the in-game
+   menu comes up. Only its transform and opacity change, so the compositor
+   runs it, and then nothing moves while a game runs in front. */
+#tungsten-root #nowplaying .dot::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(67, 226, 127, 0.6);
+  opacity: 0; transform: scale(1); pointer-events: none;
+}
+#tungsten-root.ingame-menu #nowplaying .dot::after { animation: tg-live-dot 1.8s ease-out 4; }
+@keyframes tg-live-dot {
+  0%   { opacity: 1; transform: scale(1); }
+  70%  { opacity: 0; transform: scale(2.75); }
+  100% { opacity: 0; transform: scale(2.75); }
+}
+
+/* ───────────── Bottom control legend ─────────────
+   Two rows in the same spot: keyboard keycaps, and controller symbols. They
+   cross-fade when the input changes (controller input or G → symbols, any
+   other key → keycaps).                                                    */
+#tungsten-root #legend {
+  position: fixed; bottom: 3.5cqh; left: 22cqw; z-index: 4;       /* stays above the options drawer */
+  display: grid; align-items: center;
+  font-size: clamp(11px, calc(13px * var(--ui)), 28px); color: rgba(255, 255, 255, 0.75);
+}
+#tungsten-root #legend .row {
+  grid-area: 1 / 1;
+  display: flex; align-items: center; gap: calc(12px * var(--ui));
+  white-space: nowrap;
+  transition: opacity 220ms ease, transform 280ms var(--ease), visibility 0s;
+}
+#tungsten-root #legend .row.pad,
+#tungsten-root #legend.pad-mode .row.keys {
+  opacity: 0; transform: translateY(5px); visibility: hidden;
+  transition: opacity 220ms ease, transform 280ms var(--ease), visibility 0s linear 280ms;
+}
+#tungsten-root #legend.pad-mode .row.pad {
+  opacity: 1; transform: none; visibility: visible;
+  transition: opacity 220ms ease, transform 280ms var(--ease), visibility 0s;
+}
+#tungsten-root #legend .hint { display: inline-flex; align-items: center; gap: calc(6px * var(--ui)); }
+#tungsten-root #legend .sep { color: rgba(255, 255, 255, 0.35); }
+#tungsten-root #legend kbd {
+  font-family: inherit;
+  font-size: clamp(10px, calc(11px * var(--ui)), 24px); line-height: 1.3;
+  min-width: calc(9px * var(--ui)); text-align: center;
+  padding: calc(2px * var(--ui)) calc(6px * var(--ui));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: calc(3px * var(--ui));
+  color: rgba(255, 255, 255, 0.9);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+#tungsten-root #legend kbd.hit { border-color: rgba(255, 255, 255, 0.95); box-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+/* Controller buttons: round dark-glass badges with a geometric symbol. */
+#tungsten-root #legend .btn {
+  box-sizing: border-box; flex: none;
+  width: calc(20px * var(--ui)); height: calc(20px * var(--ui)); border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+#tungsten-root #legend .btn svg {
+  display: block; width: calc(12px * var(--ui)); height: calc(12px * var(--ui)); overflow: visible;
+  fill: none; stroke: rgba(255, 255, 255, 0.92); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.6));
+}
+#tungsten-root #legend .btn svg.dpad { stroke-width: 1.1; }
+/* Letters (A B X Y) for Xbox and Nintendo pads, and Steam's universal
+   symbols: the button's place among the four, as dots. */
+#tungsten-root #legend .btn svg.letter text {
+  fill: rgba(255, 255, 255, 0.92); stroke: none;
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif; font-size: 8.6px; font-weight: 600;
+}
+#tungsten-root #legend .btn svg.dots circle { stroke-width: 1; }
+#tungsten-root #legend .btn svg.dots circle.on { fill: rgba(255, 255, 255, 0.92); }
+#tungsten-root #legend .btn svg.home { fill: rgba(255, 255, 255, 0.92); stroke: none; }
+#tungsten-root #legend .btn.hit { border-color: rgba(255, 255, 255, 0.95); box-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+/* Holding View (Create): a line fills under "Hold: Steam" for as long as the
+   hold takes, so a press that isn't meant as a switch can be let go in time. */
+#tungsten-root #legend .steam-hint.hint { position: relative; }
+#tungsten-root #legend .steam-hint.hint::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: calc(-6px * var(--ui));
+  height: 2px; border-radius: 1px;
+  background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+  transform: scaleX(0); transform-origin: left center; opacity: 0;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+#tungsten-root #legend .steam-hint.hint.holding::after {
+  transform: scaleX(1); opacity: 1;
+  transition: transform var(--hold, 1200ms) linear, opacity 120ms ease;
+}
+/* L2 / R2: the triggers, as small rounded tabs with their names. */
+#tungsten-root #legend .btn.trig {
+  width: auto; min-width: calc(24px * var(--ui)); padding: 0 calc(4px * var(--ui));
+  border-radius: calc(6px * var(--ui));
+  font-size: clamp(8px, calc(9px * var(--ui)), 20px); font-weight: 600; letter-spacing: 0.03em; line-height: 1;
+  color: rgba(255, 255, 255, 0.92);
+}
+/* Hints that don't apply where you are (see layoutLegend). */
+#tungsten-root #legend [hidden] { display: none !important; }
+/* The on-screen keyboard has its own hints: the legend makes way. */
+#tungsten-root #legend { transition: opacity 200ms ease, visibility 0s; }
+#tungsten-root[data-ctx="osk"] #legend { opacity: 0; visibility: hidden; transition: opacity 200ms ease, visibility 0s linear 200ms; }
+/* While a game is running full-screen, only the in-game menu hint shows,
+   and it fades away after a few seconds.                                   */
+#tungsten-root.ingame-live #legend .hint:not(.ingame-hint),
+#tungsten-root.ingame-live #legend .sep { display: none; }
+#tungsten-root.ingame-live #legend { animation: tg-hint-fade 5s ease forwards; }
+@keyframes tg-hint-fade { 0%, 74% { opacity: 1; } 100% { opacity: 0; } }
+/* Small toast above the T hint naming the palette that T just picked. */
+#tungsten-root #legend .tint-hint { position: relative; }
+#tungsten-root #legend .toast {
+  position: absolute; left: 0; bottom: calc(100% + 10px * var(--ui));
+  font-size: clamp(11px, calc(12px * var(--ui)), 26px); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+  color: rgba(255, 255, 255, 0.92);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 220ms ease, transform 280ms var(--ease);
+  pointer-events: none;
+}
+#tungsten-root #legend .toast.show { opacity: 1; transform: translateY(0); }
+
+/* ───────────── Options drawer (O / Tab) ───────────── */
+#tungsten-root #drawer {
+  position: fixed; right: 0; top: 0; height: 100cqh; width: calc(310px * var(--ui)); z-index: 3;
+  background: linear-gradient(90deg, transparent 0%, rgba(8, 12, 20, 0.85) 28%, rgba(8, 12, 20, 0.95) 100%);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  /* Feather the blur in with the gradient so the drawer has no hard left edge. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%);
+  transform: translateX(100%); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform 320ms var(--ease), opacity 320ms var(--ease), visibility 0s linear 320ms;
+}
+#tungsten-root.drawer-open #drawer {
+  transform: none; opacity: 1; visibility: visible; pointer-events: auto;
+  transition: transform 320ms var(--ease), opacity 320ms var(--ease), visibility 0s;
+}
+/* The cross interface steps back while the drawer is open. */
+#tungsten-root #tracks,
+#tungsten-root #cats { transition: transform 320ms var(--ease), opacity 320ms var(--ease); }
+#tungsten-root.drawer-open #tracks,
+#tungsten-root.drawer-open #cats { transform: translateX(-3cqw); opacity: 0.35; }
+#tungsten-root #dwell .logo { transition: opacity 280ms var(--ease); }
+#tungsten-root.drawer-open #dwell .logo { opacity: 0; }
+
+#tungsten-root #drawer .drawer-inner { position: absolute; left: calc(96px * var(--ui)); right: calc(28px * var(--ui)); top: 50%; transform: translateY(-50%); }
+#tungsten-root #drawer .eyebrow { font-size: clamp(11px, calc(12px * var(--ui)), 26px); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+#tungsten-root #drawer .game { margin-top: calc(8px * var(--ui)); font-size: clamp(16px, calc(20px * var(--ui)), 42px); line-height: 1.25; color: #FFFFFF; }
+#tungsten-root #drawer .opts { position: relative; margin-top: calc(26px * var(--ui)); }
+#tungsten-root #drawer ul { list-style: none; margin: 0; padding: 0; }
+#tungsten-root #drawer li {
+  font-size: clamp(14px, calc(18px * var(--ui)), 38px); line-height: 1.2; padding: calc(11px * var(--ui)) 0; white-space: nowrap;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+#tungsten-root #drawer li.sel {
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 2px 6px rgba(0, 0, 0, 0.9);   /* glowing highlight */
+}
+#tungsten-root #drawer li.pressed { animation: tg-opt-press 360ms var(--ease); }
+/* Power: "Press again to confirm" under an item that closes things. */
+#tungsten-root #drawer li .confirm {
+  display: block; margin-top: calc(5px * var(--ui));
+  font-size: clamp(11px, calc(12px * var(--ui)), 26px); letter-spacing: 0.04em; white-space: normal;
+  color: rgba(255, 255, 255, 0.78); text-shadow: none;
+}
+@keyframes tg-opt-press { 35% { transform: translateX(5px); } }
+/* Indicator bar, slides to the selected option. */
+#tungsten-root #drawer .bar {
+  position: absolute; left: calc(-16px * var(--ui)); top: 0; width: 2px; height: calc(22px * var(--ui)); border-radius: 1px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.75);
+  transform: translateY(var(--bar-y, 0px));
+  transition: transform 220ms var(--ease);
+}
+
+/* ───────────── In-game: the running game and its overlay ─────────────
+   After a launch the game's art fills the screen as the "running game".
+   I, Home or Esc opens the in-game menu over it: a dark glass layer and the
+   cross interface on top (no ribbons in-game).                             */
+#tungsten-root #game {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;     /* under the ribbons (same layer, earlier in the page) */
+  opacity: 0; visibility: hidden;
+  transition: opacity 450ms ease, visibility 0s linear 450ms;
+}
+#tungsten-root.ingame #game { opacity: 1; visibility: visible; transition: opacity 450ms ease, visibility 0s; }
+#tungsten-root #game .feed { position: absolute; inset: 0; background: #000; overflow: hidden; }
+#tungsten-root #game .feed > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.95); }
+#tungsten-root #game .glass {
+  position: absolute; inset: 0;
+  background: rgba(6, 9, 14, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0; visibility: hidden;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+}
+#tungsten-root.ingame-menu #game .glass { opacity: 1; visibility: visible; transition: opacity 320ms ease, visibility 0s; }
+
+/* Running full-screen: the launcher steps out of the way. */
+#tungsten-root.ingame-live #tracks,
+#tungsten-root.ingame-live #cats {
+  opacity: 0; transform: scale(1.04); visibility: hidden;
+  transition: opacity 260ms ease, transform 320ms var(--ease), visibility 0s linear 320ms;
+}
+#tungsten-root.ingame-live #topbar { opacity: 0; visibility: hidden; transition: opacity 260ms ease, visibility 0s linear 260ms; }
+#tungsten-root.ingame-live #field { opacity: 0; transition: opacity 260ms ease; }
+#tungsten-root.ingame #dwell { opacity: 0; visibility: hidden; transition: opacity 200ms ease, visibility 0s linear 200ms; }
+/* In-game menu: no ribbons, just the darkened game (the PS3's in-game XMB
+   showed no wave either). The ribbons stop drawing as soon as they've faded
+   out (see "Layer 0"), so a game running in front of Big Picture doesn't
+   share its GPU with them. */
+#tungsten-root.ingame-menu #field { opacity: 0; transition: opacity 320ms ease; }
+/* In the in-game overlay the menu draws over the live game, at the overlay's
+   60 Hz and on a GPU the game is already using. There it stays still and
+   cheap: no ribbons at all, no blur (the overlay can't see the game to blur
+   it, so it would only cost time), and nothing animating by itself while the
+   menu sits open, so the overlay redraws only when something moves. */
+#tungsten-root.overlay #field { display: none; }
+#tungsten-root.overlay,
+#tungsten-root.overlay * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+#tungsten-root.overlay .item.focused .glow,
+#tungsten-root.overlay #status.busy .spin,
+#tungsten-root.overlay.ingame-menu #nowplaying .dot::after { animation: none; }
+#tungsten-root.ingame-menu #nowplaying { opacity: 1; visibility: visible; transform: none; transition: opacity 280ms ease, transform 320ms var(--ease), visibility 0s; }
+#tungsten-root.ingame-live { cursor: none; }
+
+/* ───────────── Desktop Game Inspector (Space or Details) ─────────────
+   Right half of the screen, frameless, over a soft dark pool so the text
+   reads on any artwork. Frosted sub-elements and 1px hairline dividers.    */
+#tungsten-root #inspector {
+  position: fixed; left: 48cqw; right: 5cqw; top: 18cqh; bottom: 12cqh; z-index: 3;
+  max-width: calc(1000px * var(--ui));       /* ultrawide screens: the right half would be too wide to read (16:9 and 16:10 never reach it) */
+  color: #fff;
+  font-size: clamp(12px, calc(14px * var(--ui)), 30px);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: perspective(1400px) translateX(2.5cqw) rotateY(-9deg);
+  transform-origin: 0% 50%;
+  transition: opacity 240ms ease, transform 380ms var(--ease), visibility 0s linear 380ms;
+}
+#tungsten-root.inspecting #inspector {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+  transition: opacity 300ms ease, transform 440ms var(--ease), visibility 0s;
+}
+/* The inspector's readability pool: its own full-screen layer between the art
+   and the cross, so it has no edges anywhere, never dims the cross, and stays
+   put while the art changes underneath. Kept on its own compositor layer, so
+   showing or hiding it never re-rasterizes the artwork. */
+#tungsten-root #shade {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse 48cqw 70cqh at 71cqw 52cqh, rgba(4, 7, 12, 0.76) 0%, rgba(4, 7, 12, 0.6) 45%, rgba(4, 7, 12, 0.28) 75%, rgba(4, 7, 12, 0) 100%);
+  opacity: 0; visibility: hidden;                  /* not drawn at all while the inspector is closed */
+  will-change: opacity;
+  transition: opacity 260ms ease, visibility 0s linear 260ms;
+}
+#tungsten-root.inspecting #shade { opacity: 1; visibility: visible; transition: opacity 320ms ease, visibility 0s; }
+#tungsten-root #inspector .scroll {
+  position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-width: none;
+}
+#tungsten-root #inspector .scroll::-webkit-scrollbar { display: none; }
+#tungsten-root.inspecting #dwell .logo { opacity: 0; }       /* the inspector replaces the clear logo */
+/* The focused title wraps before it can reach the inspector. */
+/* The inspector header already shows the title and Play, so the focused game's
+   own title, subtitle and pills fade out (200ms) and only its glowing
+   thumbnail stays on the 22vw axis. They come back as soon as it closes. */
+#tungsten-root .item.focused .meta { transition: left var(--move) var(--ease), opacity 200ms ease, grid-template-rows var(--move) var(--ease); }
+#tungsten-root.inspecting .track.active .item.focused .meta { opacity: 0; }
+#tungsten-root.inspecting .track.active .item.focused .meta,
+#tungsten-root.inspecting .track.active .item.focused .meta * { pointer-events: none; }   /* the hidden pills can't be clicked */
+
+#tungsten-root .frost {
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+/* Screenshots and achievement badges fill their frames, so only a thin rim
+   would show the blur, and each blur is a pass of its own (a page can hold
+   dozens): those frames go without. */
+#tungsten-root .frost.shot,
+#tungsten-root .frost.badge { -webkit-backdrop-filter: none; backdrop-filter: none; }
+#tungsten-root #inspector button { font: inherit; color: inherit; cursor: pointer; }
+#tungsten-root .ins-eyebrow,
+#tungsten-root .sec-head {
+  font-size: clamp(10px, calc(12px * var(--ui)), 26px); letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+#tungsten-root .ins-title { margin: calc(6px * var(--ui)) 0 calc(16px * var(--ui)); font-size: clamp(20px, calc(30px * var(--ui)), 64px); font-weight: 400; line-height: 1.15; }
+#tungsten-root .ins-bar { display: flex; flex-wrap: wrap; align-items: stretch; gap: calc(10px * var(--ui)); padding-bottom: calc(20px * var(--ui)); }
+#tungsten-root .ins-play {
+  display: inline-flex; align-items: center; gap: calc(9px * var(--ui));
+  padding: 0 calc(20px * var(--ui)) 0 calc(16px * var(--ui)); min-height: calc(44px * var(--ui));
+  background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.34);
+  font-size: clamp(13px, calc(15px * var(--ui)), 32px); letter-spacing: 0.03em; text-shadow: none;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 220ms ease;
+}
+#tungsten-root .ins-play svg { width: calc(13px * var(--ui)); height: calc(13px * var(--ui)); fill: currentColor; }
+#tungsten-root .stat { display: flex; flex-direction: column; justify-content: center; gap: calc(3px * var(--ui)); padding: calc(6px * var(--ui)) calc(13px * var(--ui)); min-height: calc(44px * var(--ui)); box-sizing: border-box; }
+#tungsten-root .stat .k { font-size: clamp(9px, calc(10.5px * var(--ui)), 22px); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); white-space: nowrap; }
+#tungsten-root .stat .v { font-size: clamp(12px, calc(14px * var(--ui)), 30px); white-space: nowrap; }
+#tungsten-root .stat .v.ok::before {
+  content: ''; display: inline-block; vertical-align: middle; margin: calc(-2px * var(--ui)) calc(6px * var(--ui)) 0 0;
+  width: calc(6px * var(--ui)); height: calc(6px * var(--ui)); border-radius: 50%;
+  background: #43e27f; box-shadow: 0 0 6px rgba(67, 226, 127, 0.8);
+}
+#tungsten-root .quick { display: flex; gap: calc(8px * var(--ui)); margin-left: auto; }
+#tungsten-root .icon-btn {
+  width: calc(44px * var(--ui)); min-height: calc(44px * var(--ui)); padding: 0;
+  display: grid; place-items: center;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 220ms ease;
+}
+#tungsten-root .icon-btn svg { width: calc(17px * var(--ui)); height: calc(17px * var(--ui)); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+#tungsten-root .icon-btn[aria-pressed="true"] svg { fill: #fff; }
+#tungsten-root .ins-play:hover,
+#tungsten-root .ins-play:focus-visible,
+#tungsten-root .icon-btn:hover,
+#tungsten-root .icon-btn:focus-visible,
+#tungsten-root .shot:hover,
+#tungsten-root .shot:focus-visible,
+#tungsten-root .tag:hover,
+#tungsten-root .tag:focus-visible,
+#tungsten-root #inspector .pad-focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4), 0 0 32px rgba(180, 215, 255, 0.2);
+}
+/* The controller's focus ring in the inspector: a 2px white ring and a
+   brighter bloom, so it reads at a distance from anything merely hovered. */
+#tungsten-root #inspector .pad-focus {
+  background-color: rgba(255, 255, 255, 0.2); border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 18px rgba(255, 255, 255, 0.45), 0 0 36px rgba(180, 215, 255, 0.25);
+}
+#tungsten-root .ins-sec { border-top: 1px solid rgba(255, 255, 255, 0.18); padding: calc(18px * var(--ui)) 0; }
+#tungsten-root .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: calc(12px * var(--ui)); }
+#tungsten-root .sec-head .count { font-size: clamp(12px, calc(14px * var(--ui)), 30px); letter-spacing: 0.02em; text-transform: none; color: #fff; }
+#tungsten-root .sec-head .count .pct { color: rgba(255, 255, 255, 0.6); }
+#tungsten-root .ach-bar { position: relative; height: calc(6px * var(--ui)); border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
+#tungsten-root .ach-bar > span {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit;
+  background: linear-gradient(90deg, #c9d1dc 0%, #ffffff 55%, #e9eff7 100%);   /* platinum */
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55), 0 0 22px rgba(200, 220, 255, 0.28);
+  width: 0; transition: width 800ms var(--ease) 120ms;
+}
+#tungsten-root .badges { display: flex; gap: calc(10px * var(--ui)); margin-top: calc(14px * var(--ui)); }
+#tungsten-root .badge { position: relative; width: calc(46px * var(--ui)); height: calc(46px * var(--ui)); padding: calc(4px * var(--ui)); box-sizing: border-box; flex: none; }
+#tungsten-root .badge img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px; opacity: 0.92; }
+#tungsten-root .badge.locked img { filter: grayscale(1) brightness(0.6); opacity: 0.45; }
+#tungsten-root .badge.locked::after {                               /* small lock */
+  content: ''; position: absolute; right: calc(-4px * var(--ui)); bottom: calc(-4px * var(--ui));
+  width: calc(14px * var(--ui)); height: calc(14px * var(--ui)); border-radius: 50%;
+  background: rgba(10, 14, 20, 0.9) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M4 5V4a2 2 0 0 1 4 0v1h.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5zm1 0h2V4a1 1 0 0 0-2 0z'/%3E%3C/svg%3E") center / 70% no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+#tungsten-root .no-ach { font-size: clamp(12px, calc(14px * var(--ui)), 30px); color: rgba(255, 255, 255, 0.6); }
+#tungsten-root .friends { display: flex; flex-wrap: wrap; gap: calc(8px * var(--ui)); }
+#tungsten-root .friend {
+  display: inline-flex; align-items: center; gap: calc(8px * var(--ui));
+  min-height: calc(34px * var(--ui)); padding: 0 calc(14px * var(--ui)) 0 calc(5px * var(--ui));
+  border-radius: 999px; box-sizing: border-box;
+}
+#tungsten-root .friend .ava {
+  width: calc(24px * var(--ui)); height: calc(24px * var(--ui)); border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  font-size: clamp(9px, calc(11px * var(--ui)), 22px); font-weight: 500; text-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+#tungsten-root .friend .who { font-size: clamp(12px, calc(13px * var(--ui)), 28px); }
+#tungsten-root .friend .st { font-size: clamp(11px, calc(12px * var(--ui)), 26px); color: rgba(255, 255, 255, 0.55); }
+#tungsten-root .friend .st.playing { color: #8ff0b4; }
+#tungsten-root .friend .st.playing::before { content: '●'; margin-right: 0.35em; font-size: 0.8em; }
+#tungsten-root .shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(10px * var(--ui)); }
+#tungsten-root .shot { padding: calc(3px * var(--ui)); aspect-ratio: 16 / 9; overflow: hidden; cursor: zoom-in; transition: border-color 160ms ease, box-shadow 220ms ease, background-color 160ms ease; }
+#tungsten-root .shot img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.92; }
+#tungsten-root .tags { display: flex; flex-wrap: wrap; gap: calc(8px * var(--ui)); margin-top: calc(12px * var(--ui)); }
+#tungsten-root .tag {
+  display: inline-flex; align-items: center; gap: calc(6px * var(--ui));
+  min-height: calc(28px * var(--ui)); padding: 0 calc(12px * var(--ui)) 0 calc(9px * var(--ui));
+  border-radius: 999px; font-size: clamp(11px, calc(12px * var(--ui)), 26px);
+  transition: border-color 160ms ease, box-shadow 220ms ease, background-color 160ms ease;
+}
+#tungsten-root .tag svg { width: calc(11px * var(--ui)); height: calc(11px * var(--ui)); fill: none; stroke: #8ff0b4; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#tungsten-root .tag.none { cursor: default; color: rgba(255, 255, 255, 0.55); }
+
+/* ───────────── Library (GAMES > Library) ─────────────
+   A cross of its own for every game you own: the letters sit where the
+   category icons are (only the ones that have games), and the games run
+   down under them in the same cards as GAMES, A to Z. Opening it, the menu
+   steps back to the left and the library comes in from the right, the way
+   the PS3 opened a folder; Back reverses it. The letters move as one layer
+   (a transform), and only the rows near the focus are in the page at all.
+   Jumping a letter, the old rows leave to one side and the new ones come in
+   from the other, riding with their letter like a column with its category. */
+#tungsten-root #library {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  opacity: 0; visibility: hidden; transform: translateX(4cqw);
+  transition: opacity 220ms ease, transform 320ms var(--ease), visibility 0s linear 320ms;
+}
+#tungsten-root.lib-open #library {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity 280ms ease, transform 380ms var(--ease), visibility 0s;
+}
+#tungsten-root.lib-open #tracks,
+#tungsten-root.lib-open #cats {
+  opacity: 0; transform: translateX(-4cqw); visibility: hidden;
+  transition: opacity 200ms ease, transform 320ms var(--ease), visibility 0s linear 320ms;
+}
+#tungsten-root.lib-open #tracks .item.focused .glow { animation: none; }   /* (out of sight: nothing to breathe for) */
+/* The Show list (Triangle): the library steps back the way the cross does. */
+#tungsten-root.lib-open.drawer-open #library { transform: translateX(-3cqw); opacity: 0.35; transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
+
+/* Top left: where you are and what's shown (the clock's corner mirrored). */
+#tungsten-root .lib-head {
+  position: absolute; left: 4cqw; top: 3.5cqh;
+  max-width: calc(18cqw - 70px * var(--ui));       /* clear of the rows above the focus, on the 22cqw axis */
+}
+#tungsten-root .lib-head .eyebrow { font-size: clamp(10px, calc(12px * var(--ui)), 26px); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+#tungsten-root .lib-name {
+  margin-top: calc(6px * var(--ui));
+  font-size: clamp(17px, calc(26px * var(--ui)), 56px); line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#tungsten-root .lib-n { margin-top: calc(5px * var(--ui)); font-size: clamp(11px, calc(13px * var(--ui)), 28px); color: rgba(255, 255, 255, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The letters: frosted glass like the category icons, 64px apart. The row
+   slides so the focused game's letter sits on the 22cqw axis. */
+#tungsten-root .lib-row {
+  position: absolute; left: 22cqw; top: 25cqh; width: 0; height: 0; margin: 0; padding: 0;
+  transform: translateX(calc(var(--at, 0) * -64px * var(--ui)));
+  transition: transform var(--move) var(--ease);
+  will-change: transform;                          /* one layer: a letter step is a slide, nothing is drawn again */
+}
+#tungsten-root .lib-row.instant { transition: none; }
+#tungsten-root .lib-letter {
+  position: absolute; top: 0; left: calc(var(--i) * 64px * var(--ui));
+  width: calc(48px * var(--ui)); height: calc(48px * var(--ui));
+  transform: translate(-50%, calc(var(--anchor) * 100%));
+  list-style: none; opacity: 0.45; pointer-events: auto; cursor: pointer;
+  transition: opacity var(--move) var(--ease);
+}
+#tungsten-root .lib-letter svg {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible;
+  transform: scale(0.78);
+  transition: transform var(--move) var(--ease), opacity var(--move) var(--ease);
+}
+#tungsten-root .lib-letter text { font-family: var(--font); font-size: 19px; font-weight: 400; text-anchor: middle; }
+#tungsten-root .lib-letter .ico { filter: drop-shadow(0 2px 0 rgba(120, 140, 170, 0.5)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85)); }
+#tungsten-root .lib-letter .glow { opacity: 0; filter: blur(7px); }
+#tungsten-root .lib-letter .glow .glass { fill: #fff; stroke: none; }
+#tungsten-root .lib-letter.active { opacity: 1; }
+#tungsten-root .lib-letter:not(.active):hover { opacity: 0.85; }
+#tungsten-root .lib-letter.active svg { transform: scale(1.15); }
+#tungsten-root .lib-letter.active .glow { opacity: 0.65; }
+/* Under the focused letter, like a category's name: how many games it has. */
+#tungsten-root .lib-count {
+  position: absolute; left: 22cqw; top: calc(25cqh + (24px + 24px * 1.15 + 10px) * var(--ui));
+  transform: translateX(-50%);
+  font-size: calc(12px * var(--ui)); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+}
+
+/* The games: the GAMES cards and rows (see .item), in a column of their own. */
+#tungsten-root .lib-track {
+  position: absolute; inset: 0; margin: 0; padding: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5cqh - 80px), transparent calc(100% - 3.5cqh - 24px));
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5cqh - 80px), transparent calc(100% - 3.5cqh - 24px));
+}
+#tungsten-root #library .item .thumb,
+#tungsten-root #library .item:not(.above) .meta { pointer-events: auto; cursor: pointer; }
+#tungsten-root #library .item:not(.focused).hover .thumb { opacity: 0.85; }
+#tungsten-root #library .item.below.hover .title { color: rgba(255, 255, 255, 0.85); }
+#tungsten-root #library .item[data-in="r"] { animation: tg-lib-in-r var(--move) var(--ease); }
+#tungsten-root #library .item[data-in="l"] { animation: tg-lib-in-l var(--move) var(--ease); }
+#tungsten-root #library .item.out-l { animation: tg-lib-out-l var(--move) var(--ease) forwards; pointer-events: none; }
+#tungsten-root #library .item.out-r { animation: tg-lib-out-r var(--move) var(--ease) forwards; pointer-events: none; }
+#tungsten-root #library .item.out-l *, #tungsten-root #library .item.out-r * { pointer-events: none !important; }
+@keyframes tg-lib-in-r { from { opacity: 0; transform: translateX(calc(64px * var(--ui))); } }
+@keyframes tg-lib-in-l { from { opacity: 0; transform: translateX(calc(-64px * var(--ui))); } }
+@keyframes tg-lib-out-l { to { opacity: 0; transform: translateX(calc(-64px * var(--ui))); } }
+@keyframes tg-lib-out-r { to { opacity: 0; transform: translateX(calc(64px * var(--ui))); } }
+/* Games that aren't installed: their art dimmed, with a small download mark. */
+#tungsten-root #library .item.off .thumb > img,
+#tungsten-root #library .item.off .thumb > svg { opacity: 0.5; transition: opacity var(--move) var(--ease); }
+#tungsten-root #library .item.off.focused .thumb > img,
+#tungsten-root #library .item.off.focused .thumb > svg { opacity: 0.82; }
+#tungsten-root #library .item.off .title { color: rgba(255, 255, 255, 0.5); }
+#tungsten-root #library .item.off.focused .title { color: rgba(255, 255, 255, 0.9); }
+#tungsten-root #library .thumb > .ph { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)); }
+#tungsten-root .dl-mark {
+  position: absolute; right: 5%; bottom: 8%; height: 25%; aspect-ratio: 1;
+  display: grid; place-items: center; border-radius: 50%;
+  background: rgba(8, 12, 18, 0.8); border: 1px solid rgba(255, 255, 255, 0.45);
+}
+#tungsten-root .dl-mark svg { width: 58%; height: 58%; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* Nothing matches the search: said in the focus slot. */
+#tungsten-root .lib-empty {
+  position: absolute; left: 31cqw; top: calc(41cqh + 48px * var(--ui));
+  font-size: clamp(13px, calc(18px * var(--ui)), 36px); color: rgba(255, 255, 255, 0.6); white-space: nowrap;
+  opacity: 0; transition: opacity 200ms ease;
+}
+#tungsten-root .lib-empty.show { opacity: 1; }
+/* The Show list: each filter's count, and a check on the one in use. */
+#tungsten-root #drawer li .n { margin-left: calc(10px * var(--ui)); font-size: 0.78em; color: rgba(255, 255, 255, 0.45); }
+#tungsten-root #drawer li.on::after { content: '\2713'; margin-left: calc(10px * var(--ui)); font-size: 0.85em; color: rgba(255, 255, 255, 0.85); }
+
+/* Tungsten's own pages in the inspector's panel: Downloads rows, with header
+   art, a progress bar (platinum, like the achievements bar) and their
+   buttons; Screenshots reuse the inspector's grid. */
+#tungsten-root #inspector img.broken { visibility: hidden; }
+#tungsten-root .dl-list { display: flex; flex-direction: column; gap: calc(4px * var(--ui)); }
+/* Each download is one stop for the controller's focus: the row lights up,
+   and the ring sits on the button Cross presses (Left / Right pick another). */
+#tungsten-root .dl-row {
+  display: flex; align-items: center; gap: calc(14px * var(--ui));
+  padding: calc(4px * var(--ui)) calc(8px * var(--ui)); margin: 0 calc(-8px * var(--ui));
+  border-radius: calc(8px * var(--ui));
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+#tungsten-root #inspector .dl-row.pad-focus {
+  background-color: rgba(255, 255, 255, 0.08); border-color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+#tungsten-root #inspector .dl-row .pad-sub {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.2); border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 18px rgba(255, 255, 255, 0.45), 0 0 36px rgba(180, 215, 255, 0.25);
+}
+#tungsten-root .dl-art {
+  flex: none; width: calc(120px * var(--ui)); height: calc(56px * var(--ui)); object-fit: cover; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+#tungsten-root .dl-row.active .dl-art { width: calc(150px * var(--ui)); height: calc(70px * var(--ui)); }
+#tungsten-root .dl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(6px * var(--ui)); }
+#tungsten-root .dl-title { font-size: clamp(13px, calc(15px * var(--ui)), 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tungsten-root .dl-meta { font-size: clamp(11px, calc(12.5px * var(--ui)), 26px); color: rgba(255, 255, 255, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tungsten-root .dl-bar { position: relative; height: calc(5px * var(--ui)); border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+/* The fill is the bar's full width, slid in from the left as it grows: the
+   compositor moves it, nothing is laid out again every second. */
+#tungsten-root .dl-bar > span {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, #c9d1dc 0%, #ffffff 55%, #e9eff7 100%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
+  transition: transform 900ms linear;
+}
+#tungsten-root .dl-acts { flex: none; display: flex; gap: calc(8px * var(--ui)); }
+#tungsten-root .dl-btn {
+  display: inline-flex; align-items: center; gap: calc(6px * var(--ui));
+  min-height: calc(32px * var(--ui)); padding: 0 calc(12px * var(--ui));
+  font-size: clamp(11px, calc(12.5px * var(--ui)), 26px); white-space: nowrap;
+  transition: border-color 160ms ease, box-shadow 220ms ease, background-color 160ms ease;
+}
+#tungsten-root .dl-btn svg { width: calc(10px * var(--ui)); height: calc(10px * var(--ui)); fill: currentColor; }
+#tungsten-root .ins-play svg path[d^="M3 2h2.2"] { fill: currentColor; }
+#tungsten-root .icon-btn svg path[d^="M14 4h6v6"] { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Lightbox for screenshots and DLC art. */
+#tungsten-root #lightbox {
+  position: fixed; inset: 0; z-index: 6;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(16px * var(--ui));
+  background: rgba(3, 5, 9, 0.86);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  opacity: 0; visibility: hidden; pointer-events: none; cursor: zoom-out;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
+}
+#tungsten-root #lightbox.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 240ms ease, visibility 0s; }
+#tungsten-root #lightbox img {
+  display: block; max-width: 82cqw; max-height: 74cqh; border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 24px 70px rgba(0, 0, 0, 0.65);
+  transform: scale(0.97); transition: transform 320ms var(--ease);
+}
+#tungsten-root #lightbox.open img { transform: none; }
+#tungsten-root #lightbox .cap { font-size: clamp(12px, calc(14px * var(--ui)), 30px); color: rgba(255, 255, 255, 0.8); letter-spacing: 0.03em; }
+#tungsten-root #lightbox .cap .n { color: rgba(255, 255, 255, 0.5); margin-left: 0.7em; }
+#tungsten-root #lightbox .nav {
+  position: absolute; top: 50%; width: calc(44px * var(--ui)); height: calc(44px * var(--ui)); margin-top: calc(-22px * var(--ui));
+  border-radius: 50%; display: grid; place-items: center; color: #fff; cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 220ms ease;
+}
+#tungsten-root #lightbox .nav:hover { border-color: rgba(255, 255, 255, 0.9); box-shadow: 0 0 16px rgba(255, 255, 255, 0.4); }
+#tungsten-root #lightbox .nav.prev { left: 4cqw; }
+#tungsten-root #lightbox .nav.next { right: 4cqw; }
+#tungsten-root #lightbox .nav svg { width: calc(16px * var(--ui)); height: calc(16px * var(--ui)); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#tungsten-root #lightbox .nav[hidden] { display: none; }
+
+/* ───────────── Launch sequence (Enter on a game, 1.6s) ─────────────
+      0 ms  confirm chime. The X/Y axes zoom to 1.08 and fade out (400ms);
+            the backdrop gives way to the ribbons, which surge to 1.8×
+    350 ms  the whole screen cross-fades to pitch black (450ms)
+    750 ms  launch card: clear logo, a hairline that fills, "Launching"
+   1400 ms  the card fades
+   1600 ms  the black lifts on the running game (see "In-game")           */
+#tungsten-root #tracks,
+#tungsten-root #cats,
+#tungsten-root #library { transform-origin: 22cqw calc(41cqh + 62px * var(--ui)); }   /* zoom from the focused game */
+#tungsten-root.booting #tracks,
+#tungsten-root.booting #cats,
+#tungsten-root.booting.lib-open #library {
+  transform: scale(1.08); opacity: 0;
+  transition: transform 400ms var(--ease), opacity 400ms ease;
+}
+#tungsten-root.booting #dwell { opacity: 0; transition: opacity 400ms ease; }
+#tungsten-root.booting #dwell .logo { opacity: 0; }            /* stays down even when launched from the drawer */
+#tungsten-root.booting #field {
+  opacity: 1; transition: opacity 250ms ease;
+  animation: tg-surge 1200ms ease-out both;
+}
+/* A brightness() filter can't brighten white light on a transparent canvas
+   (white × 1.8 is still white), so the canvas reads this value every frame
+   and adds the same boost to its own pixels. See frame().                  */
+@keyframes tg-surge {
+  0%   { filter: brightness(1); }
+  28%  { filter: brightness(1.8); }
+  100% { filter: brightness(1.35); }
+}
+#tungsten-root #boot {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  background: #000;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 450ms ease, visibility 0s linear 450ms;
+}
+#tungsten-root #boot.on { visibility: visible; pointer-events: auto; transition: opacity 450ms ease, visibility 0s; }   /* holds the pointer from the first frame */
+#tungsten-root #boot.dark { opacity: 1; }
+#tungsten-root #boot .card {
+  display: flex; flex-direction: column; align-items: center;
+  opacity: 0; transform: scale(0.97);
+  transition: opacity 250ms ease, transform 700ms var(--ease);
+}
+#tungsten-root #boot.show .card { opacity: 1; transform: none; }
+#tungsten-root #boot .mark { display: flex; align-items: center; justify-content: center; text-shadow: none; }
+#tungsten-root #boot .mark canvas { display: block; }
+#tungsten-root #boot .wordmark {
+  max-width: 340px; text-align: center; text-transform: uppercase;
+  font-size: 32px; font-weight: 300; letter-spacing: 0.14em; line-height: 1.15;
+  padding-left: 0.14em;                            /* balances the trailing letter-spacing */
+}
+#tungsten-root #boot .line {
+  position: relative; overflow: hidden;
+  width: 168px; height: 1px; margin-top: 36px;
+  background: rgba(255, 255, 255, 0.14);
+}
+#tungsten-root #boot .line > span {
+  position: absolute; inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  transform: scaleX(0); transform-origin: 0 50%;
+}
+#tungsten-root #boot.fill .line > span { transform: scaleX(1); transition: transform 600ms cubic-bezier(0.45, 0, 0.2, 1); }
+#tungsten-root #boot.power .line,
+#tungsten-root #boot.power .label { display: none; }                 /* Power: just what's happening */
+#tungsten-root #boot .label {
+  margin-top: 14px; padding-left: 0.32em;          /* balances the trailing letter-spacing */
+  font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6); text-shadow: none;
+}
+
+/* ───────────── Cold boot (the startup movie, 6.2 s; B replays it) ─────────────
+      0 ms  pitch black, and none of the interface: the categories, the
+            column, the top-right pills, the legend and the art are hidden.
+            The black lifts off the background and the ribbons (1.4 s),
+            which sweep in big, fast and glowing and settle by 2.5 s (see
+            frame(): waves 1.6×, flow 1.8×, brightness 1.65, blur 3px).
+   1300 ms  the wordmark fades in on the right (900 ms, drifting 10px in)
+   3800 ms  it dissolves (900 ms)
+   4800 ms  the cross materializes (850 ms each, a little apart, so the
+            legend is the last one in at 6.2 s); then the usual 550 ms
+            dwell brings in the focused game's art.
+   Enter, Space, Esc (Cross, Circle) or a click skip straight to 4800 ms. */
+#tungsten-root #coldboot { position: fixed; inset: 0; z-index: 5; pointer-events: none; visibility: hidden; }
+#tungsten-root.cold #coldboot { visibility: visible; }
+#tungsten-root.cold-hold #coldboot { pointer-events: auto; cursor: none; }
+#tungsten-root #coldboot .veil { position: absolute; inset: 0; background: #000; opacity: 0; }
+#tungsten-root.cold #coldboot .veil { opacity: 1; }
+#tungsten-root.cold.cold-dip #coldboot .veil { transition: opacity 250ms ease; }   /* a replay goes down to black first */
+#tungsten-root.cold.cold-in #coldboot .veil { opacity: 0; transition: opacity 1400ms ease; }
+#tungsten-root #coldboot .mark {
+  position: absolute; right: 9cqw; top: 46cqh;
+  text-align: right; text-shadow: none;
+  opacity: 0; transform: translateX(calc(-10px * var(--ui)));
+}
+#tungsten-root.cold-word #coldboot .mark { opacity: 1; transform: none; transition: opacity 900ms ease, transform 900ms ease; }
+#tungsten-root.cold-word.cold-wordout #coldboot .mark { opacity: 0; transition: opacity 900ms ease; }
+#tungsten-root #coldboot .word {
+  font-size: clamp(calc(22px * var(--ui)), 2.2cqw, calc(34px * var(--ui)));
+  font-weight: 300; letter-spacing: 0.42em; line-height: 1.1;
+  margin-right: -0.42em;                             /* the last letter's spacing hangs past the edge */
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+#tungsten-root #coldboot .cap {
+  margin-top: calc(8px * var(--ui)); margin-right: -0.28em;
+  font-size: calc(11px * var(--ui)); font-weight: 400; letter-spacing: 0.28em; line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+/* Skipped: the black and the wordmark go quickly. */
+#tungsten-root.cold-skip #coldboot .veil { transition: opacity 400ms ease; }
+#tungsten-root.cold-skip #coldboot .mark { transition: opacity 300ms ease; }
+/* The interface, hidden until 4800 ms. */
+#tungsten-root.cold #cats,
+#tungsten-root.cold #tracks,
+#tungsten-root.cold #topbar,
+#tungsten-root.cold #legend,
+#tungsten-root.cold #dwell { opacity: 0; transform: scale(0.97); transition: none; }
+#tungsten-root.cold #dwell { transform: none; }
+#tungsten-root.cold #topbar { transform-origin: 100% 0; }
+#tungsten-root.cold #legend { transform-origin: 0 100%; }
+#tungsten-root.cold.cold-dip #cats,
+#tungsten-root.cold.cold-dip #tracks,
+#tungsten-root.cold.cold-dip #topbar,
+#tungsten-root.cold.cold-dip #legend,
+#tungsten-root.cold.cold-dip #dwell { transition: opacity 250ms ease, transform 250ms ease; }
+#tungsten-root.cold.cold-ui #cats,
+#tungsten-root.cold.cold-ui #tracks,
+#tungsten-root.cold.cold-ui #topbar,
+#tungsten-root.cold.cold-ui #legend { opacity: 1; transform: none; transition: opacity 850ms var(--ease), transform 850ms var(--ease); }
+#tungsten-root.cold.cold-ui #tracks { transition-delay: 150ms; }
+#tungsten-root.cold.cold-ui #topbar { transition-delay: 400ms; }
+#tungsten-root.cold.cold-ui #legend { transition-delay: 550ms; }
+
+/* ───────────── Screensaver hand-off (see "Screensaver") ─────────────
+   ambient: everything but the background and the ribbons fades away (2 s),
+   or at once (ambient-now) when the screensaver is already over it;
+   ambient-back / ambient-return: and back again (300 ms after a press,
+   1.2 s after the screensaver).                                          */
+#tungsten-root.ambient > :not(#field):not(svg):not(#game) { opacity: 0 !important; pointer-events: none !important; transition: opacity 2000ms ease !important; }
+#tungsten-root.ambient.ambient-now > :not(#field):not(svg):not(#game) { transition: none !important; }
+#tungsten-root.ambient-back > :not(#field):not(svg):not(#game) { transition: opacity 300ms ease !important; }
+#tungsten-root.ambient-return > :not(#field):not(svg):not(#game) { transition: opacity 1200ms ease !important; }
+#tungsten-root.ambient .item.focused .glow { animation: none; }   /* (nothing to breathe for while the menu is away) */
+#tungsten-root.ambient,
+#tungsten-root.ambient * { cursor: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  #tungsten-root.cold #cats,
+  #tungsten-root.cold #tracks,
+  #tungsten-root.cold #topbar,
+  #tungsten-root.cold #legend { transform: none; }
+  #tungsten-root #coldboot .mark { transform: none; }
+  #tungsten-root #status .spin { animation-duration: 8s; }
+  #tungsten-root .item.focused .glow { animation: none; }
+  #tungsten-root .item { animation: none; }
+  #tungsten-root #library .item[data-in] { animation: none; }
+  #tungsten-root #library,
+  #tungsten-root.lib-open #tracks,
+  #tungsten-root.lib-open #cats { transform: none; }
+  #tungsten-root.booting #tracks,
+  #tungsten-root.booting #cats,
+  #tungsten-root.booting.lib-open #library { transform: none; }
+  #tungsten-root.booting #field { animation: none; }
+}

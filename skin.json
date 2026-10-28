@@ -1,0 +1,31 @@
+{
+    "name": "Tungsten",
+    "author": "emmanuel-g55932",
+    "version": "1.5.0",
+    "description": "A console-style home screen for Steam Big Picture: your games and the rest of Steam on a cross-shaped menu made for a TV and a controller, with an A to Z library, an in-game menu in the overlay, and your apps. Hold View (or press Ctrl + Shift + X) to switch back to Steam's own interface at any time. Beta, made with AI assistance (see the README).",
+    "tags": [
+        "Big Picture",
+        "Launcher",
+        "Controller",
+        "Dark"
+    ],
+    "github": {
+        "owner": "emmanuel-g55932",
+        "repo_name": "Tungsten"
+    },
+    "header_image": "https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/header.jpg",
+    "splash_image": "https://raw.githubusercontent.com/emmanuel-g55932/Tungsten/main/images/splash.jpg",
+    "UseDefaultPatches": true,
+    "Patches": [
+        {
+            "MatchRegexString": ".*SharedJSContext.*|.*Steam.*",
+            "TargetCss": "libraryroot.custom.css",
+            "TargetJs": "libraryroot.custom.js"
+        },
+        {
+            "MatchRegexString": ".*SteamOverlay.*|.*Overlay.*",
+            "TargetCss": "libraryroot.custom.css",
+            "TargetJs": "libraryroot.custom.js"
+        }
+    ]
+}
