@@ -1,7 +1,7 @@
 {
     "name": "Tungsten",
     "author": "emmanuel-g55932",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "A console-style home screen for Steam Big Picture: your games and the rest of Steam on a cross-shaped menu made for a TV and a controller, with an A to Z library, an in-game menu in the overlay, and your apps. Hold View (or press Ctrl + Shift + X) to switch back to Steam's own interface at any time. Beta, made with AI assistance (see the README).",
     "tags": [
         "Big Picture",
